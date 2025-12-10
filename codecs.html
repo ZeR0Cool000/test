@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codec Checker</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      padding: 16px;
+      margin: 0;
+    }
+    h1 { color: #00d9ff; font-size: 1.5em; }
+    h2 { color: #ff6b6b; margin-top: 24px; font-size: 1.2em; border-bottom: 1px solid #333; padding-bottom: 8px; }
+    .codec-list { display: flex; flex-direction: column; gap: 4px; }
+    .codec-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #16213e;
+      border-radius: 6px;
+      font-size: 0.85em;
+    }
+    .codec-name { word-break: break-all; flex: 1; margin-right: 8px; }
+    .supported { color: #4ade80; }
+    .maybe { color: #fbbf24; }
+    .not-supported { color: #f87171; }
+    .section { margin-bottom: 24px; }
+    .stats {
+      background: #0f3460;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .copy-btn {
+      background: #00d9ff;
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .copy-btn:active {
+      background: #00b8d9;
+    }
+    .copy-btn.copied {
+      background: #4ade80;
+    }
+  </style>
+</head>
+<body>
+<h1>🎬 Codec Checker</h1>
+<button class="copy-btn" id="copyBtn">📋 Копировать в JSON</button>
+<div class="stats" id="stats"></div>
+<div id="results"></div>
+
+<script>
+  const videoCodecs = [
+    // H.264 / AVC
+    'video/mp4; codecs="avc1.42E01E"',
+    'video/mp4; codecs="avc1.4D401E"',
+    'video/mp4; codecs="avc1.64001E"',
+    'video/mp4; codecs="avc1.640028"',
+    'video/mp4; codecs="avc1.640034"',
+    // H.265 / HEVC
+    'video/mp4; codecs="hvc1.1.6.L93.B0"',
+    'video/mp4; codecs="hev1.1.6.L93.B0"',
+    'video/mp4; codecs="hvc1.2.4.L120.B0"',
+    // VP8 / VP9
+    'video/webm; codecs="vp8"',
+    'video/webm; codecs="vp09.00.10.08"',
+    'video/webm; codecs="vp09.02.10.10.01.09.16.09.01"',
+    'video/mp4; codecs="vp09.00.10.08"',
+    // AV1
+    'video/mp4; codecs="av01.0.00M.08"',
+    'video/mp4; codecs="av01.0.04M.10"',
+    'video/mp4; codecs="av01.0.08M.10"',
+    'video/mp4; codecs="av01.0.12M.10"',
+    'video/webm; codecs="av01.0.04M.08"',
+    // Dolby Vision
+    'video/mp4; codecs="dvh1.05.06"',
+    'video/mp4; codecs="dvhe.05.06"',
+    // Другие
+    'video/webm; codecs="vp8, vorbis"',
+    'video/webm; codecs="vp9, opus"',
+    'video/ogg; codecs="theora"',
+    'video/3gpp; codecs="mp4v.20.8"',
+  ];
+
+  const audioCodecs = [
+    // AAC
+    'audio/mp4; codecs="mp4a.40.2"',
+    'audio/mp4; codecs="mp4a.40.5"',
+    'audio/mp4; codecs="mp4a.40.29"',
+    'audio/mp4; codecs="mp4a.67"',
+    // Opus
+    'audio/webm; codecs="opus"',
+    'audio/ogg; codecs="opus"',
+    'audio/mp4; codecs="opus"',
+    // Vorbis
+    'audio/webm; codecs="vorbis"',
+    'audio/ogg; codecs="vorbis"',
+    // Dolby
+    'audio/mp4; codecs="ac-3"',
+    'audio/mp4; codecs="ec-3"',
+    'audio/mp4; codecs="ac-4"',
+    // FLAC
+    'audio/flac',
+    'audio/mp4; codecs="fLaC"',
+    // DTS
+    'audio/mp4; codecs="dtsc"',
+    'audio/mp4; codecs="dtse"',
+    'audio/mp4; codecs="dtsx"',
+    // Другие
+    'audio/mpeg',
+    'audio/wav',
+    'audio/aac',
+  ];
+
+  const video = document.createElement('video');
+  const hasMSE = 'MediaSource' in window;
+
+  function checkCodec(mimeType) {
+    const canPlay = video.canPlayType(mimeType);
+    let mseSupport = false;
+    if (hasMSE) {
+      try {
+        mseSupport = MediaSource.isTypeSupported(mimeType);
+      } catch (e) {}
+    }
+    return { canPlay, mseSupport };
+  }
+
+  function getStatusClass(canPlay, mseSupport) {
+    if (canPlay === 'probably' || mseSupport) return 'supported';
+    if (canPlay === 'maybe') return 'maybe';
+    return 'not-supported';
+  }
+
+  function getStatusText(canPlay, mseSupport) {
+    const parts = [];
+    if (canPlay) parts.push(`canPlay: ${canPlay}`);
+    if (mseSupport) parts.push('MSE: ✓');
+    return parts.length ? parts.join(' | ') : '✗';
+  }
+
+  function renderSection(title, codecs) {
+    let supported = 0, maybe = 0, notSupported = 0;
+
+    let html = `<div class="section"><h2>${title}</h2><div class="codec-list">`;
+
+    codecs.forEach(codec => {
+      const { canPlay, mseSupport } = checkCodec(codec);
+      const statusClass = getStatusClass(canPlay, mseSupport);
+      const statusText = getStatusText(canPlay, mseSupport);
+
+      if (statusClass === 'supported') supported++;
+      else if (statusClass === 'maybe') maybe++;
+      else notSupported++;
+
+      html += `
+                    <div class="codec-item">
+                        <span class="codec-name">${codec}</span>
+                        <span class="${statusClass}">${statusText}</span>
+                    </div>
+                `;
+    });
+
+    html += '</div></div>';
+    return { html, supported, maybe, notSupported };
+  }
+
+  const videoResult = renderSection('🎥 Video Codecs', videoCodecs);
+  const audioResult = renderSection('🔊 Audio Codecs', audioCodecs);
+
+  document.getElementById('stats').innerHTML = `
+            <b>MSE поддержка:</b> ${hasMSE ? '✓ Да' : '✗ Нет'}<br>
+            <b>Видео:</b> ${videoResult.supported} поддерживается, ${videoResult.maybe} возможно, ${videoResult.notSupported} нет<br>
+            <b>Аудио:</b> ${audioResult.supported} поддерживается, ${audioResult.maybe} возможно, ${audioResult.notSupported} нет
+        `;
+
+  document.getElementById('results').innerHTML = videoResult.html + audioResult.html;
+
+  // Собираем все данные в объект
+  const allData = {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    mseSupported: hasMSE,
+    timestamp: new Date().toISOString(),
+    video: {},
+    audio: {}
+  };
+
+  videoCodecs.forEach(codec => {
+    const { canPlay, mseSupport } = checkCodec(codec);
+    allData.video[codec] = { canPlayType: canPlay || '', mseSupported: mseSupport };
+  });
+
+  audioCodecs.forEach(codec => {
+    const { canPlay, mseSupport } = checkCodec(codec);
+    allData.audio[codec] = { canPlayType: canPlay || '', mseSupported: mseSupport };
+  });
+
+  // Кнопка копирования
+  document.getElementById('copyBtn').addEventListener('click', async function() {
+    const btn = this;
+    const jsonStr = JSON.stringify(allData, null, 2);
+
+    try {
+      await navigator.clipboard.writeText(jsonStr);
+      btn.textContent = '✓ Скопировано!';
+      btn.classList.add('copied');
+    } catch (e) {
+      // Fallback для Android
+      const textarea = document.createElement('textarea');
+      textarea.value = jsonStr;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        btn.textContent = '✓ Скопировано!';
+        btn.classList.add('copied');
+      } catch (e2) {
+        btn.textContent = '✗ Ошибка';
+      }
+      document.body.removeChild(textarea);
+    }
+
+    setTimeout(() => {
+      btn.textContent = '📋 Копировать в JSON';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plugins & MimeTypes Checker</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+      padding: 10px;
+      margin: 0;
+      background: #1a1a2e;
+      color: #eee;
+      font-size: 14px;
+    }
+    h1 { font-size: 18px; margin: 10px 0; color: #00d9ff; }
+    h2 { font-size: 16px; margin: 15px 0 10px; color: #ffd700; border-bottom: 1px solid #333; padding-bottom: 5px; }
+
+    .copy-btn {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      background: #00d9ff;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .copy-btn:active { background: #00a8cc; }
+    .copy-btn.copied { background: #00ff88; }
+    .copy-btn.error { background: #ff4444; color: #fff; }
+
+    .info-box {
+      background: #16213e;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .info-box strong { color: #00d9ff; }
+
+    .plugin {
+      background: #0f3460;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .plugin-name { color: #00ff88; font-weight: bold; font-size: 14px; }
+    .plugin-desc { color: #aaa; font-size: 12px; margin: 5px 0; }
+    .plugin-file { color: #ff9f43; font-size: 11px; }
+
+    .mime {
+      background: #1a1a40;
+      border-left: 3px solid #00d9ff;
+      padding: 8px;
+      margin: 5px 0 5px 10px;
+      font-size: 12px;
+    }
+    .mime-type { color: #00d9ff; font-weight: bold; }
+    .mime-suffixes { color: #ff6b6b; }
+
+    .empty { color: #ff6b6b; font-style: italic; padding: 20px; text-align: center; }
+
+    .section { margin-bottom: 20px; }
+
+    .count {
+      background: #ff9f43;
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    pre {
+      background: #0a0a15;
+      padding: 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 11px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+<h1>🔌 Plugins & MimeTypes Checker</h1>
+
+<button class="copy-btn" id="copyBtn">📋 Скопировать в JSON</button>
+
+<div class="info-box">
+  <strong>User Agent:</strong><br>
+  <span id="ua"></span>
+</div>
+
+<div class="section">
+  <h2>📦 navigator.plugins <span class="count" id="pluginsCount">0</span></h2>
+  <div id="pluginsOutput"></div>
+</div>
+
+<div class="section">
+  <h2>📄 navigator.mimeTypes <span class="count" id="mimeTypesCount">0</span></h2>
+  <div id="mimeTypesOutput"></div>
+</div>
+
+<div class="section">
+  <h2>📝 Raw JSON</h2>
+  <pre id="jsonOutput"></pre>
+</div>
+
+<script>
+  let collectedData = {};
+
+  function collectData() {
+    // Собираем plugins
+    const plugins = [];
+    for (let i = 0; i < navigator.plugins.length; i++) {
+      const p = navigator.plugins[i];
+      const mimes = [];
+      for (let j = 0; j < p.length; j++) {
+        const m = p[j];
+        mimes.push({
+          type: m.type,
+          description: m.description,
+          suffixes: m.suffixes
+        });
+      }
+      plugins.push({
+        name: p.name,
+        description: p.description,
+        filename: p.filename,
+        length: p.length,
+        mimeTypes: mimes
+      });
+    }
+
+    // Собираем mimeTypes отдельно
+    const mimeTypes = [];
+    for (let i = 0; i < navigator.mimeTypes.length; i++) {
+      const m = navigator.mimeTypes[i];
+      mimeTypes.push({
+        type: m.type,
+        description: m.description,
+        suffixes: m.suffixes,
+        enabledPlugin: m.enabledPlugin ? m.enabledPlugin.name : null
+      });
+    }
+
+    collectedData = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      vendor: navigator.vendor,
+      timestamp: new Date().toISOString(),
+      pdfViewerEnabled: navigator.pdfViewerEnabled,
+      plugins: plugins,
+      mimeTypes: mimeTypes
+    };
+
+    return collectedData;
+  }
+
+  function renderPlugins(plugins) {
+    if (plugins.length === 0) {
+      return '<div class="empty">Плагины не найдены (пустой массив)</div>';
+    }
+
+    return plugins.map((p, idx) => `
+                <div class="plugin">
+                    <div class="plugin-name">${idx + 1}. ${escapeHtml(p.name)}</div>
+                    <div class="plugin-desc">${escapeHtml(p.description)}</div>
+                    <div class="plugin-file">📁 ${escapeHtml(p.filename)}</div>
+                    ${p.mimeTypes.length > 0 ? p.mimeTypes.map(m => `
+                        <div class="mime">
+                            <span class="mime-type">${escapeHtml(m.type)}</span>
+                            ${m.suffixes ? `<span class="mime-suffixes"> (.${escapeHtml(m.suffixes)})</span>` : ''}
+                            <div style="color:#888">${escapeHtml(m.description)}</div>
+                        </div>
+                    `).join('') : '<div class="mime" style="color:#666">No MIME types</div>'}
+                </div>
+            `).join('');
+  }
+
+  function renderMimeTypes(mimeTypes) {
+    if (mimeTypes.length === 0) {
+      return '<div class="empty">MimeTypes не найдены (пустой массив)</div>';
+    }
+
+    return mimeTypes.map((m, idx) => `
+                <div class="mime" style="margin-left:0; margin-bottom:8px;">
+                    <span class="mime-type">${idx + 1}. ${escapeHtml(m.type)}</span>
+                    ${m.suffixes ? `<span class="mime-suffixes"> (.${escapeHtml(m.suffixes)})</span>` : ''}
+                    <div style="color:#888">${escapeHtml(m.description)}</div>
+                    ${m.enabledPlugin ? `<div style="color:#00ff88">↳ Plugin: ${escapeHtml(m.enabledPlugin)}</div>` : ''}
+                </div>
+            `).join('');
+  }
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+
+  function init() {
+    document.getElementById('ua').textContent = navigator.userAgent;
+
+    const data = collectData();
+
+    document.getElementById('pluginsCount').textContent = data.plugins.length;
+    document.getElementById('mimeTypesCount').textContent = data.mimeTypes.length;
+
+    document.getElementById('pluginsOutput').innerHTML = renderPlugins(data.plugins);
+    document.getElementById('mimeTypesOutput').innerHTML = renderMimeTypes(data.mimeTypes);
+    document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
+  }
+
+  // Копирование с fallback для Android
+  document.getElementById('copyBtn').addEventListener('click', async function() {
+    const btn = this;
+    const jsonStr = JSON.stringify(collectedData, null, 2);
+
+    try {
+      await navigator.clipboard.writeText(jsonStr);
+      btn.textContent = '✅ Скопировано!';
+      btn.classList.add('copied');
+    } catch (e) {
+      // Fallback для Android
+      const textarea = document.createElement('textarea');
+      textarea.value = jsonStr;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '0';
+      textarea.setAttribute('readonly', '');
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      try {
+        const success = document.execCommand('copy');
+        if (success) {
+          btn.textContent = '✅ Скопировано!';
+          btn.classList.add('copied');
+        } else {
+          throw new Error('execCommand failed');
+        }
+      } catch (e2) {
+        btn.textContent = '❌ Ошибка копирования';
+        btn.classList.add('error');
+        console.error('Copy failed:', e2);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    setTimeout(() => {
+      btn.textContent = '📋 Скопировать в JSON';
+      btn.classList.remove('copied', 'error');
+    }, 2000);
+  });
+
+  init();
+</script>
+</body>
+</html>

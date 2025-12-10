@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User-Agent Client Hints Diagnostic</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 100%;
+      margin: 0;
+      padding: 16px;
+      background: #1a1a2e;
+      color: #eee;
+      font-size: 14px;
+    }
+    h1 {
+      font-size: 1.4em;
+      color: #00d9ff;
+      margin-bottom: 20px;
+    }
+    h2 {
+      font-size: 1.1em;
+      color: #ff6b6b;
+      margin: 20px 0 10px 0;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #333;
+    }
+    .section {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 6px 0;
+      border-bottom: 1px solid #333;
+    }
+    .row:last-child {
+      border-bottom: none;
+    }
+    .label {
+      color: #888;
+      min-width: 140px;
+      flex-shrink: 0;
+    }
+    .value {
+      color: #4ade80;
+      word-break: break-all;
+      flex: 1;
+    }
+    .value.error {
+      color: #ff6b6b;
+    }
+    .json-block {
+      background: #0f0f23;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 12px;
+      color: #4ade80;
+    }
+    .copy-btn {
+      background: #00d9ff;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 16px;
+      width: 100%;
+    }
+    .copy-btn:active {
+      background: #00a8c7;
+    }
+    .brand-item {
+      background: #0f0f23;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+    }
+    .not-supported {
+      color: #ff6b6b;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+<h1>🔍 User-Agent Client Hints</h1>
+
+<h2>navigator.userAgentData (Low-Entropy)</h2>
+<div class="section" id="low-entropy">
+  <div class="not-supported">Загрузка...</div>
+</div>
+
+<h2>getHighEntropyValues() (High-Entropy)</h2>
+<div class="section" id="high-entropy">
+  <div class="not-supported">Загрузка...</div>
+</div>
+
+<h2>Классические свойства Navigator</h2>
+<div class="section" id="classic-navigator"></div>
+
+<h2>Полный JSON для копирования</h2>
+<div class="section">
+  <div class="json-block" id="full-json"></div>
+  <button class="copy-btn" onclick="copyJson()">📋 Скопировать JSON</button>
+</div>
+
+<script>
+  const allData = {
+    userAgentData: null,
+    highEntropyValues: null,
+    classicNavigator: {}
+  };
+
+  // Классические свойства navigator
+  function getClassicNavigator() {
+    const props = [
+      'userAgent',
+      'appVersion',
+      'platform',
+      'vendor',
+      'language',
+      'languages',
+      'hardwareConcurrency',
+      'deviceMemory',
+      'maxTouchPoints',
+      'cookieEnabled',
+      'pdfViewerEnabled',
+      'webdriver'
+    ];
+
+    const container = document.getElementById('classic-navigator');
+    container.innerHTML = '';
+
+    props.forEach(prop => {
+      let value;
+      try {
+        value = navigator[prop];
+        if (Array.isArray(value)) {
+          value = JSON.stringify(value);
+        }
+        allData.classicNavigator[prop] = navigator[prop];
+      } catch (e) {
+        value = 'Error: ' + e.message;
+      }
+
+      container.innerHTML += `
+                    <div class="row">
+                        <span class="label">${prop}</span>
+                        <span class="value">${value ?? 'undefined'}</span>
+                    </div>
+                `;
+    });
+  }
+
+  // Low-entropy userAgentData
+  function getLowEntropy() {
+    const container = document.getElementById('low-entropy');
+
+    if (!navigator.userAgentData) {
+      container.innerHTML = '<div class="not-supported">❌ userAgentData не поддерживается</div>';
+      return;
+    }
+
+    const uaData = navigator.userAgentData;
+    allData.userAgentData = {
+      brands: uaData.brands,
+      mobile: uaData.mobile,
+      platform: uaData.platform
+    };
+
+    let brandsHtml = '';
+    uaData.brands.forEach(b => {
+      brandsHtml += `
+                    <div class="brand-item">
+                        <strong>${b.brand}</strong>: ${b.version}
+                    </div>
+                `;
+    });
+
+    container.innerHTML = `
+                <div class="row">
+                    <span class="label">mobile</span>
+                    <span class="value">${uaData.mobile}</span>
+                </div>
+                <div class="row">
+                    <span class="label">platform</span>
+                    <span class="value">${uaData.platform}</span>
+                </div>
+                <div class="row">
+                    <span class="label">brands</span>
+                    <span class="value">${brandsHtml}</span>
+                </div>
+            `;
+  }
+
+  // High-entropy values
+  async function getHighEntropy() {
+    const container = document.getElementById('high-entropy');
+
+    if (!navigator.userAgentData?.getHighEntropyValues) {
+      container.innerHTML = '<div class="not-supported">❌ getHighEntropyValues не поддерживается</div>';
+      return;
+    }
+
+    try {
+      const hints = [
+        'architecture',
+        'bitness',
+        'brands',
+        'formFactors',
+        'fullVersionList',
+        'model',
+        'platform',
+        'platformVersion',
+        'mobile',
+        'wow64'
+      ];
+
+      const data = await navigator.userAgentData.getHighEntropyValues(hints);
+      allData.highEntropyValues = data;
+
+      let html = '';
+
+      // Простые значения
+      const simpleProps = ['platform', 'platformVersion', 'architecture', 'bitness', 'model', 'mobile', 'wow64'];
+      simpleProps.forEach(prop => {
+        if (data[prop] !== undefined) {
+          html += `
+                            <div class="row">
+                                <span class="label">${prop}</span>
+                                <span class="value">${data[prop]}</span>
+                            </div>
+                        `;
+        }
+      });
+
+      // formFactors
+      if (data.formFactors) {
+        html += `
+                        <div class="row">
+                            <span class="label">formFactors</span>
+                            <span class="value">${JSON.stringify(data.formFactors)}</span>
+                        </div>
+                    `;
+      }
+
+      // brands
+      if (data.brands) {
+        let brandsHtml = '';
+        data.brands.forEach(b => {
+          brandsHtml += `<div class="brand-item"><strong>${b.brand}</strong>: ${b.version}</div>`;
+        });
+        html += `
+                        <div class="row">
+                            <span class="label">brands</span>
+                            <span class="value">${brandsHtml}</span>
+                        </div>
+                    `;
+      }
+
+      // fullVersionList
+      if (data.fullVersionList) {
+        let fvlHtml = '';
+        data.fullVersionList.forEach(b => {
+          fvlHtml += `<div class="brand-item"><strong>${b.brand}</strong>: ${b.version}</div>`;
+        });
+        html += `
+                        <div class="row">
+                            <span class="label">fullVersionList</span>
+                            <span class="value">${fvlHtml}</span>
+                        </div>
+                    `;
+      }
+
+      container.innerHTML = html;
+
+    } catch (e) {
+      container.innerHTML = `<div class="not-supported">❌ Ошибка: ${e.message}</div>`;
+    }
+  }
+
+  function updateJson() {
+    const jsonEl = document.getElementById('full-json');
+    jsonEl.textContent = JSON.stringify(allData, null, 2);
+  }
+
+  function copyJson() {
+    const json = JSON.stringify(allData, null, 2);
+    navigator.clipboard.writeText(json).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✅ Скопировано!';
+      setTimeout(() => {
+        btn.textContent = '📋 Скопировать JSON';
+      }, 2000);
+    }).catch(err => {
+      alert('Ошибка копирования: ' + err);
+    });
+  }
+
+  // Init
+  async function init() {
+    getClassicNavigator();
+    getLowEntropy();
+    await getHighEntropy();
+    updateJson();
+  }
+
+  init();
+</script>
+</body>
+</html>
