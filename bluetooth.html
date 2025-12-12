@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bluetooth Fingerprint Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 16px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00d4ff;
+      margin-bottom: 8px;
+      font-size: 1.5rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+      color: #00d4ff;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::before {
+      content: '📡';
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      gap: 12px;
+    }
+
+    .item:last-child {
+      border-bottom: none;
+    }
+
+    .item-key {
+      color: #aaa;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      min-width: 140px;
+    }
+
+    .item-value {
+      color: #fff;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+      text-align: right;
+    }
+
+    .item-value.true { color: #4caf50; }
+    .item-value.false { color: #f44336; }
+    .item-value.undefined { color: #ff9800; }
+    .item-value.error { color: #f44336; }
+    .item-value.native { color: #4caf50; }
+    .item-value.spoofed { color: #ff9800; }
+
+    .copy-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .copy-btn:active {
+      transform: scale(0.98);
+    }
+
+    .copy-btn.copied {
+      background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+    }
+
+    .raw-json {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .toggle-raw {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #aaa;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 12px;
+      display: block;
+      width: 100%;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-left: 8px;
+    }
+
+    .status-badge.supported { background: #4caf50; color: #000; }
+    .status-badge.unsupported { background: #f44336; color: #fff; }
+    .status-badge.partial { background: #ff9800; color: #000; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+
+    .loading::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+
+    .info-note {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 3px solid #00d4ff;
+      padding: 12px;
+      margin: 16px 0;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🔵 Bluetooth Fingerprint</h1>
+  <p class="subtitle">Web Bluetooth API параметры для fingerprinting</p>
+
+  <div id="results">
+    <div class="loading">Сбор данных</div>
+  </div>
+
+  <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()">
+    📋 Копировать JSON
+  </button>
+
+  <button class="toggle-raw" onclick="toggleRawJson()">
+    Показать/скрыть Raw JSON
+  </button>
+
+  <div class="raw-json" id="rawJson"></div>
+</div>
+
+<script>
+  // Глобальный объект для хранения всех данных
+  let fingerprintData = {};
+
+  // Утилиты
+  function getType(value) {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    if (Array.isArray(value)) return 'array';
+    return typeof value;
+  }
+
+  function safeCall(fn, fallback = null) {
+    try {
+      return fn();
+    } catch (e) {
+      return { error: e.message, name: e.name };
+    }
+  }
+
+  async function safeAsyncCall(fn, fallback = null) {
+    try {
+      return await fn();
+    } catch (e) {
+      return { error: e.message, name: e.name };
+    }
+  }
+
+  function checkNative(fn) {
+    if (!fn) return 'undefined';
+    const str = fn.toString();
+    if (str.includes('[native code]')) return 'native';
+    if (str.includes('function')) return 'spoofed';
+    return 'unknown';
+  }
+
+  function getPrototypeInfo(obj, name) {
+    const info = {};
+    try {
+      info.exists = obj !== undefined && obj !== null;
+      if (!info.exists) return info;
+
+      info.type = typeof obj;
+      info.constructor = obj.constructor ? obj.constructor.name : null;
+      info.prototype = Object.getPrototypeOf(obj) ? Object.getPrototypeOf(obj).constructor.name : null;
+
+      // toString checks
+      info.toString = safeCall(() => obj.toString());
+      info.toStringTag = safeCall(() => obj[Symbol.toStringTag]);
+      info.objectToString = safeCall(() => Object.prototype.toString.call(obj));
+
+      // Property descriptor checks
+      const ownProps = Object.getOwnPropertyNames(obj);
+      info.ownPropertyCount = ownProps.length;
+      info.ownProperties = ownProps.slice(0, 20); // Limit for readability
+
+    } catch (e) {
+      info.error = e.message;
+    }
+    return info;
+  }
+
+  // Основная функция сбора данных
+  async function collectBluetoothFingerprint() {
+    const data = {
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      secureContext: window.isSecureContext,
+      bluetooth: {}
+    };
+
+    // 1. Базовая проверка navigator.bluetooth
+    data.bluetooth.navigatorBluetooth = {
+      exists: 'bluetooth' in navigator,
+      type: typeof navigator.bluetooth,
+      isNull: navigator.bluetooth === null,
+      isUndefined: navigator.bluetooth === undefined
+    };
+
+    if (!navigator.bluetooth) {
+      data.bluetooth.supported = false;
+      data.bluetooth.reason = 'navigator.bluetooth is not available';
+      return data;
+    }
+
+    data.bluetooth.supported = true;
+
+    // 2. Prototype integrity checks
+    data.bluetooth.prototypeInfo = getPrototypeInfo(navigator.bluetooth, 'Bluetooth');
+
+    // 3. Method existence and native checks
+    const methods = ['getAvailability', 'getDevices', 'requestDevice'];
+    data.bluetooth.methods = {};
+
+    for (const method of methods) {
+      data.bluetooth.methods[method] = {
+        exists: method in navigator.bluetooth,
+        type: typeof navigator.bluetooth[method],
+        native: checkNative(navigator.bluetooth[method])
+      };
+
+      // Additional checks for method descriptors
+      const descriptor = Object.getOwnPropertyDescriptor(navigator.bluetooth, method) ||
+              Object.getOwnPropertyDescriptor(Bluetooth.prototype, method);
+      if (descriptor) {
+        data.bluetooth.methods[method].descriptor = {
+          configurable: descriptor.configurable,
+          enumerable: descriptor.enumerable,
+          writable: descriptor.writable
+        };
+      }
+    }
+
+    // 4. Event support
+    data.bluetooth.events = {
+      onavailabilitychanged: 'onavailabilitychanged' in navigator.bluetooth,
+      addEventListener: typeof navigator.bluetooth.addEventListener === 'function'
+    };
+
+    // 5. getAvailability() call
+    data.bluetooth.availability = await safeAsyncCall(async () => {
+      const startTime = performance.now();
+      const result = await navigator.bluetooth.getAvailability();
+      const endTime = performance.now();
+      return {
+        value: result,
+        type: typeof result,
+        timing: endTime - startTime
+      };
+    });
+
+    // 6. getDevices() call (may require prior permission)
+    data.bluetooth.devices = await safeAsyncCall(async () => {
+      const startTime = performance.now();
+      const devices = await navigator.bluetooth.getDevices();
+      const endTime = performance.now();
+      return {
+        count: devices.length,
+        devices: devices.map(d => ({
+          id: d.id,
+          name: d.name,
+          gatt: d.gatt ? true : false
+        })),
+        timing: endTime - startTime
+      };
+    });
+
+    // 7. Permissions API check for bluetooth
+    data.bluetooth.permission = await safeAsyncCall(async () => {
+      if (!navigator.permissions) {
+        return { error: 'Permissions API not available' };
+      }
+
+      // Check if bluetooth permission can be queried
+      try {
+        const result = await navigator.permissions.query({ name: 'bluetooth' });
+        return {
+          state: result.state,
+          name: result.name,
+          onchangeExists: 'onchange' in result
+        };
+      } catch (e) {
+        // Some browsers don't support querying bluetooth permission
+        return {
+          error: e.message,
+          name: e.name,
+          supported: false
+        };
+      }
+    });
+
+    // 8. Bluetooth class/constructor checks
+    data.bluetooth.constructorInfo = safeCall(() => {
+      const info = {};
+
+      // Check if Bluetooth exists as global
+      info.globalBluetooth = typeof Bluetooth !== 'undefined';
+
+      if (typeof Bluetooth !== 'undefined') {
+        info.bluetoothName = Bluetooth.name;
+        info.bluetoothLength = Bluetooth.length;
+        info.bluetoothToString = Bluetooth.toString();
+        info.bluetoothPrototype = Object.getOwnPropertyNames(Bluetooth.prototype);
+      }
+
+      // Check BluetoothDevice
+      info.globalBluetoothDevice = typeof BluetoothDevice !== 'undefined';
+      if (typeof BluetoothDevice !== 'undefined') {
+        info.bluetoothDevicePrototype = Object.getOwnPropertyNames(BluetoothDevice.prototype);
+      }
+
+      // Check BluetoothRemoteGATTServer
+      info.globalBluetoothRemoteGATTServer = typeof BluetoothRemoteGATTServer !== 'undefined';
+
+      // Check BluetoothRemoteGATTService
+      info.globalBluetoothRemoteGATTService = typeof BluetoothRemoteGATTService !== 'undefined';
+
+      // Check BluetoothRemoteGATTCharacteristic
+      info.globalBluetoothRemoteGATTCharacteristic = typeof BluetoothRemoteGATTCharacteristic !== 'undefined';
+
+      return info;
+    });
+
+    // 9. Feature Policy / Permissions Policy check
+    data.bluetooth.permissionsPolicy = safeCall(() => {
+      const info = {};
+
+      if (document.featurePolicy) {
+        info.featurePolicyExists = true;
+        info.bluetoothAllowed = document.featurePolicy.allowsFeature('bluetooth');
+        info.bluetoothAllowedSelf = document.featurePolicy.allowsFeature('bluetooth', window.location.origin);
+      } else if (document.permissionsPolicy) {
+        info.permissionsPolicyExists = true;
+        info.bluetoothAllowed = document.permissionsPolicy.allowsFeature('bluetooth');
+      } else {
+        info.policyAPIExists = false;
+      }
+
+      return info;
+    });
+
+    // 10. Additional prototype lie detection
+    data.bluetooth.lieDetection = safeCall(() => {
+      const lies = [];
+
+      // Check if toString returns expected value
+      const btString = navigator.bluetooth.toString();
+      if (!btString.includes('[object Bluetooth]')) {
+        lies.push({ type: 'toString', expected: '[object Bluetooth]', got: btString });
+      }
+
+      // Check Symbol.toStringTag
+      const toStringTag = navigator.bluetooth[Symbol.toStringTag];
+      if (toStringTag !== 'Bluetooth') {
+        lies.push({ type: 'toStringTag', expected: 'Bluetooth', got: toStringTag });
+      }
+
+      // Check for unexpected enumerable properties
+      const enumerable = [];
+      for (let prop in navigator.bluetooth) {
+        enumerable.push(prop);
+      }
+      if (enumerable.length > 0) {
+        lies.push({ type: 'unexpectedEnumerable', props: enumerable });
+      }
+
+      // Check prototype chain
+      const proto = Object.getPrototypeOf(navigator.bluetooth);
+      if (proto && proto.constructor.name !== 'Bluetooth') {
+        lies.push({ type: 'prototypeChain', expected: 'Bluetooth', got: proto.constructor.name });
+      }
+
+      return {
+        detected: lies.length > 0,
+        count: lies.length,
+        lies: lies
+      };
+    });
+
+    // 11. Timing analysis
+    data.bluetooth.timing = await safeAsyncCall(async () => {
+      const timings = [];
+
+      for (let i = 0; i < 3; i++) {
+        const start = performance.now();
+        try {
+          await navigator.bluetooth.getAvailability();
+        } catch (e) {}
+        const end = performance.now();
+        timings.push(end - start);
+      }
+
+      return {
+        samples: timings,
+        average: timings.reduce((a, b) => a + b, 0) / timings.length,
+        min: Math.min(...timings),
+        max: Math.max(...timings)
+      };
+    });
+
+    return data;
+  }
+
+  // Рендеринг результатов
+  function renderResults(data) {
+    const container = document.getElementById('results');
+    let html = '';
+
+    // API Status
+    const supported = data.bluetooth.supported;
+    const statusClass = supported ? 'supported' : 'unsupported';
+    const statusText = supported ? 'Supported' : 'Not Supported';
+
+    html += `
+                <div class="section">
+                    <div class="section-title">API Status <span class="status-badge ${statusClass}">${statusText}</span></div>
+                    <div class="item">
+                        <span class="item-key">navigator.bluetooth</span>
+                        <span class="item-value ${data.bluetooth.navigatorBluetooth.exists}">${data.bluetooth.navigatorBluetooth.exists}</span>
+                    </div>
+                    <div class="item">
+                        <span class="item-key">Type</span>
+                        <span class="item-value">${data.bluetooth.navigatorBluetooth.type}</span>
+                    </div>
+                    <div class="item">
+                        <span class="item-key">Secure Context</span>
+                        <span class="item-value ${data.secureContext}">${data.secureContext}</span>
+                    </div>
+                </div>
+            `;
+
+    if (!supported) {
+      html += `
+                    <div class="info-note">
+                        ⚠️ Web Bluetooth API не поддерживается в этом браузере.
+                        Это типично для Firefox, Safari и некоторых privacy-focused браузеров.
+                    </div>
+                `;
+      container.innerHTML = html;
+      return;
+    }
+
+    // Availability
+    const avail = data.bluetooth.availability;
+    html += `
+                <div class="section">
+                    <div class="section-title">getAvailability()</div>
+                    <div class="item">
+                        <span class="item-key">Value</span>
+                        <span class="item-value ${avail.error ? 'error' : avail.value}">${avail.error ? avail.error : avail.value}</span>
+                    </div>
+                    ${!avail.error ? `
+                    <div class="item">
+                        <span class="item-key">Timing</span>
+                        <span class="item-value">${avail.timing?.toFixed(2)} ms</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+    // Methods
+    html += `
+                <div class="section">
+                    <div class="section-title">Methods</div>
+            `;
+    for (const [method, info] of Object.entries(data.bluetooth.methods || {})) {
+      html += `
+                    <div class="item">
+                        <span class="item-key">${method}()</span>
+                        <span class="item-value ${info.native}">${info.exists ? info.native : 'missing'}</span>
+                    </div>
+                `;
+    }
+    html += `</div>`;
+
+    // Permission
+    const perm = data.bluetooth.permission;
+    html += `
+                <div class="section">
+                    <div class="section-title">Permission State</div>
+                    <div class="item">
+                        <span class="item-key">State</span>
+                        <span class="item-value">${perm?.state || perm?.error || 'unknown'}</span>
+                    </div>
+                    ${perm?.supported === false ? `
+                    <div class="item">
+                        <span class="item-key">Query Supported</span>
+                        <span class="item-value false">false</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+    // Devices
+    const devices = data.bluetooth.devices;
+    html += `
+                <div class="section">
+                    <div class="section-title">getDevices()</div>
+                    <div class="item">
+                        <span class="item-key">Count</span>
+                        <span class="item-value">${devices?.count ?? devices?.error ?? 'unknown'}</span>
+                    </div>
+                    ${devices?.error ? `
+                    <div class="item">
+                        <span class="item-key">Error</span>
+                        <span class="item-value error">${devices.error}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+    // Constructor Info
+    const ctor = data.bluetooth.constructorInfo;
+    if (ctor && !ctor.error) {
+      html += `
+                    <div class="section">
+                        <div class="section-title">Global Constructors</div>
+                        <div class="item">
+                            <span class="item-key">Bluetooth</span>
+                            <span class="item-value ${ctor.globalBluetooth}">${ctor.globalBluetooth}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">BluetoothDevice</span>
+                            <span class="item-value ${ctor.globalBluetoothDevice}">${ctor.globalBluetoothDevice}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">BluetoothRemoteGATTServer</span>
+                            <span class="item-value ${ctor.globalBluetoothRemoteGATTServer}">${ctor.globalBluetoothRemoteGATTServer}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">BluetoothRemoteGATTService</span>
+                            <span class="item-value ${ctor.globalBluetoothRemoteGATTService}">${ctor.globalBluetoothRemoteGATTService}</span>
+                        </div>
+                    </div>
+                `;
+    }
+
+    // Prototype Info
+    const proto = data.bluetooth.prototypeInfo;
+    if (proto) {
+      html += `
+                    <div class="section">
+                        <div class="section-title">Prototype Analysis</div>
+                        <div class="item">
+                            <span class="item-key">Constructor</span>
+                            <span class="item-value">${proto.constructor}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">Symbol.toStringTag</span>
+                            <span class="item-value">${proto.toStringTag}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">Object.toString()</span>
+                            <span class="item-value">${proto.objectToString}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">Own Properties</span>
+                            <span class="item-value">${proto.ownPropertyCount}</span>
+                        </div>
+                    </div>
+                `;
+    }
+
+    // Lie Detection
+    const lies = data.bluetooth.lieDetection;
+    if (lies) {
+      const lieClass = lies.detected ? 'spoofed' : 'native';
+      html += `
+                    <div class="section">
+                        <div class="section-title">Lie Detection</div>
+                        <div class="item">
+                            <span class="item-key">Lies Detected</span>
+                            <span class="item-value ${lieClass}">${lies.detected ? 'YES (' + lies.count + ')' : 'None'}</span>
+                        </div>
+                        ${lies.lies?.map(lie => `
+                        <div class="item">
+                            <span class="item-key">${lie.type}</span>
+                            <span class="item-value error">Expected: ${lie.expected}, Got: ${lie.got || lie.props?.join(', ')}</span>
+                        </div>
+                        `).join('') || ''}
+                    </div>
+                `;
+    }
+
+    // Timing Analysis
+    const timing = data.bluetooth.timing;
+    if (timing && !timing.error) {
+      html += `
+                    <div class="section">
+                        <div class="section-title">Timing Analysis</div>
+                        <div class="item">
+                            <span class="item-key">Average</span>
+                            <span class="item-value">${timing.average?.toFixed(3)} ms</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">Min / Max</span>
+                            <span class="item-value">${timing.min?.toFixed(3)} / ${timing.max?.toFixed(3)} ms</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">Samples</span>
+                            <span class="item-value">[${timing.samples?.map(s => s.toFixed(2)).join(', ')}]</span>
+                        </div>
+                    </div>
+                `;
+    }
+
+    // Events
+    const events = data.bluetooth.events;
+    if (events) {
+      html += `
+                    <div class="section">
+                        <div class="section-title">Event Support</div>
+                        <div class="item">
+                            <span class="item-key">onavailabilitychanged</span>
+                            <span class="item-value ${events.onavailabilitychanged}">${events.onavailabilitychanged}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">addEventListener</span>
+                            <span class="item-value ${events.addEventListener}">${events.addEventListener}</span>
+                        </div>
+                    </div>
+                `;
+    }
+
+    // Permissions Policy
+    const policy = data.bluetooth.permissionsPolicy;
+    if (policy && !policy.error) {
+      html += `
+                    <div class="section">
+                        <div class="section-title">Permissions Policy</div>
+                        <div class="item">
+                            <span class="item-key">Policy API</span>
+                            <span class="item-value ${policy.featurePolicyExists || policy.permissionsPolicyExists || false}">
+                                ${policy.featurePolicyExists ? 'featurePolicy' : policy.permissionsPolicyExists ? 'permissionsPolicy' : 'not available'}
+                            </span>
+                        </div>
+                        ${policy.bluetoothAllowed !== undefined ? `
+                        <div class="item">
+                            <span class="item-key">bluetooth allowed</span>
+                            <span class="item-value ${policy.bluetoothAllowed}">${policy.bluetoothAllowed}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+    }
+
+    container.innerHTML = html;
+  }
+
+  // Копирование в буфер
+  async function copyToClipboard() {
+    const json = JSON.stringify(fingerprintData, null, 2);
+    const btn = document.getElementById('copyBtn');
+
+    try {
+      // Попытка использовать современный API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(json);
+      } else {
+        // Fallback для Android и старых браузеров
+        const textarea = document.createElement('textarea');
+        textarea.value = json;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          document.execCommand('copy');
+        } catch (e) {
+          console.error('execCommand copy failed:', e);
+          throw e;
+        }
+
+        document.body.removeChild(textarea);
+      }
+
+      btn.textContent = '✅ Скопировано!';
+      btn.classList.add('copied');
+
+      setTimeout(() => {
+        btn.textContent = '📋 Копировать JSON';
+        btn.classList.remove('copied');
+      }, 2000);
+
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      btn.textContent = '❌ Ошибка копирования';
+
+      setTimeout(() => {
+        btn.textContent = '📋 Копировать JSON';
+      }, 2000);
+    }
+  }
+
+  // Показать/скрыть raw JSON
+  function toggleRawJson() {
+    const rawDiv = document.getElementById('rawJson');
+    if (rawDiv.style.display === 'none' || !rawDiv.style.display) {
+      rawDiv.style.display = 'block';
+      rawDiv.textContent = JSON.stringify(fingerprintData, null, 2);
+    } else {
+      rawDiv.style.display = 'none';
+    }
+  }
+
+  // Инициализация
+  async function init() {
+    try {
+      fingerprintData = await collectBluetoothFingerprint();
+      renderResults(fingerprintData);
+      document.getElementById('rawJson').textContent = JSON.stringify(fingerprintData, null, 2);
+    } catch (e) {
+      document.getElementById('results').innerHTML = `
+                    <div class="section">
+                        <div class="section-title" style="color: #f44336;">Error</div>
+                        <div class="item">
+                            <span class="item-key">Message</span>
+                            <span class="item-value error">${e.message}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">Stack</span>
+                            <span class="item-value error">${e.stack}</span>
+                        </div>
+                    </div>
+                `;
+    }
+  }
+
+  // Запуск
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+</body>
+</html>
