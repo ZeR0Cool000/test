@@ -3,114 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User-Agent & Client Hints Sync Tester</title>
+  <title>Extended UA & Device Consistency Tester</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
       background: #0d1117;
       color: #c9d1d9;
       padding: 20px;
-      max-width: 1400px;
+      max-width: 1600px;
       margin: 0 auto;
     }
-    h1 {
-      color: #58a6ff;
-      border-bottom: 1px solid #30363d;
-      padding-bottom: 10px;
-    }
+    h1 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
     h2 {
       color: #8b949e;
       font-size: 14px;
       margin-top: 30px;
       text-transform: uppercase;
       letter-spacing: 1px;
-    }
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .panel {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 8px;
       padding: 15px;
+      margin-bottom: 20px;
     }
-    .panel h3 {
-      margin: 0 0 15px 0;
-      color: #58a6ff;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .panel h3 .icon {
-      font-size: 18px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    th, td {
-      padding: 8px 10px;
-      text-align: left;
-      border-bottom: 1px solid #21262d;
-    }
-    th {
-      color: #8b949e;
-      font-weight: 500;
-      background: #0d1117;
-    }
-    td {
-      font-family: 'Monaco', 'Menlo', monospace;
-      word-break: break-all;
-    }
-    .value {
-      color: #7ee787;
-    }
-    .missing {
-      color: #f85149;
-      font-style: italic;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #21262d; }
+    th { color: #8b949e; font-weight: 500; background: #0d1117; }
+    td { font-family: 'Monaco', 'Menlo', monospace; word-break: break-all; }
+    .value { color: #7ee787; }
+    .missing { color: #f85149; font-style: italic; }
 
-    /* Comparison section */
-    .comparison {
-      margin-top: 30px;
-    }
-    .comparison-table {
-      width: 100%;
-    }
-    .comparison-table th {
-      width: 20%;
-    }
-    .comparison-table .match {
-      background: rgba(46, 160, 67, 0.15);
-    }
-    .comparison-table .mismatch {
-      background: rgba(248, 81, 73, 0.15);
-    }
-    .comparison-table .warning {
-      background: rgba(210, 153, 34, 0.15);
-    }
+    .match { background: rgba(46, 160, 67, 0.15); }
+    .mismatch { background: rgba(248, 81, 73, 0.15); }
+    .warning { background: rgba(210, 153, 34, 0.15); }
+    .info { background: rgba(88, 166, 255, 0.1); }
 
-    .status-icon {
-      font-size: 16px;
-      margin-right: 5px;
-    }
     .status-match { color: #3fb950; }
     .status-mismatch { color: #f85149; }
     .status-warning { color: #d29922; }
     .status-info { color: #58a6ff; }
 
-    /* Summary */
     .summary {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 15px;
       margin: 20px 0;
     }
@@ -124,22 +65,10 @@
     .summary-card.success { border-color: #3fb950; }
     .summary-card.error { border-color: #f85149; }
     .summary-card.warning { border-color: #d29922; }
-    .summary-card .number {
-      font-size: 32px;
-      font-weight: bold;
-    }
-    .summary-card .label {
-      font-size: 12px;
-      color: #8b949e;
-      margin-top: 5px;
-    }
+    .summary-card .number { font-size: 28px; font-weight: bold; }
+    .summary-card .label { font-size: 11px; color: #8b949e; margin-top: 5px; }
 
-    /* Buttons */
-    .actions {
-      margin: 20px 0;
-      display: flex;
-      gap: 10px;
-    }
+    .actions { margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap; }
     button {
       background: #238636;
       color: white;
@@ -152,23 +81,11 @@
       align-items: center;
       gap: 8px;
     }
-    button:hover {
-      background: #2ea043;
-    }
-    button.secondary {
-      background: #21262d;
-      border: 1px solid #30363d;
-    }
-    button.secondary:hover {
-      background: #30363d;
-    }
+    button:hover { background: #2ea043; }
+    button.secondary { background: #21262d; border: 1px solid #30363d; }
+    button.secondary:hover { background: #30363d; }
 
-    /* Loading */
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #8b949e;
-    }
+    .loading { text-align: center; padding: 40px; color: #8b949e; }
     .spinner {
       display: inline-block;
       width: 30px;
@@ -178,14 +95,9 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Detection alerts */
-    .alerts {
-      margin: 20px 0;
-    }
+    .alerts { margin: 20px 0; }
     .alert {
       padding: 12px 15px;
       border-radius: 6px;
@@ -194,38 +106,18 @@
       align-items: flex-start;
       gap: 10px;
     }
-    .alert-error {
-      background: rgba(248, 81, 73, 0.1);
-      border: 1px solid #f85149;
-    }
-    .alert-warning {
-      background: rgba(210, 153, 34, 0.1);
-      border: 1px solid #d29922;
-    }
-    .alert-success {
-      background: rgba(46, 160, 67, 0.1);
-      border: 1px solid #3fb950;
-    }
-    .alert-icon {
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-    .alert-content {
-      flex: 1;
-    }
-    .alert-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .alert-desc {
-      font-size: 12px;
-      color: #8b949e;
-    }
+    .alert-error { background: rgba(248, 81, 73, 0.1); border: 1px solid #f85149; }
+    .alert-warning { background: rgba(210, 153, 34, 0.1); border: 1px solid #d29922; }
+    .alert-success { background: rgba(46, 160, 67, 0.1); border: 1px solid #3fb950; }
+    .alert-info { background: rgba(88, 166, 255, 0.1); border: 1px solid #58a6ff; }
+    .alert-icon { font-size: 18px; flex-shrink: 0; }
+    .alert-content { flex: 1; }
+    .alert-title { font-weight: 600; margin-bottom: 4px; }
+    .alert-desc { font-size: 12px; color: #8b949e; }
 
-    /* Raw data */
-    .raw-data {
-      margin-top: 30px;
-    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
     pre {
       background: #0d1117;
       border: 1px solid #30363d;
@@ -233,697 +125,1131 @@
       padding: 15px;
       overflow-x: auto;
       font-size: 11px;
-      max-height: 300px;
+      max-height: 400px;
       overflow-y: auto;
     }
 
-    .copy-btn {
-      float: right;
-      padding: 5px 10px;
-      font-size: 12px;
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 5px;
     }
+    .tag-mobile { background: #238636; color: white; }
+    .tag-desktop { background: #1f6feb; color: white; }
+    .tag-android { background: #3ddc84; color: black; }
+    .tag-ios { background: #007aff; color: white; }
+    .tag-windows { background: #00a4ef; color: white; }
+    .tag-linux { background: #fcc624; color: black; }
+    .tag-mac { background: #555; color: white; }
+
+    .collapse-btn {
+      background: transparent;
+      border: none;
+      color: #58a6ff;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+    }
+    .collapsed { display: none; }
+
+    .detection-score {
+      font-size: 48px;
+      font-weight: bold;
+      text-align: center;
+      padding: 20px;
+    }
+    .score-good { color: #3fb950; }
+    .score-medium { color: #d29922; }
+    .score-bad { color: #f85149; }
   </style>
 </head>
 <body>
-<h1>🔍 User-Agent & Client Hints Synchronization Tester</h1>
+<h1>🔬 Extended UA & Device Consistency Tester</h1>
 <p style="color: #8b949e;">
-  Compares HTTP headers with JavaScript APIs to detect emulation inconsistencies.
-  HTTP headers are fetched via external service, JS data is collected locally.
+  Comprehensive test for detecting emulation inconsistencies across HTTP headers, JavaScript APIs, and device characteristics.
 </p>
 
 <div class="actions">
-  <button onclick="runTest()">
-    <span>🚀</span> Run Full Test
-  </button>
-  <button class="secondary" onclick="copyResults()">
-    <span>📋</span> Copy Results JSON
-  </button>
-  <button class="secondary" onclick="location.reload()">
-    <span>🔄</span> Refresh
-  </button>
+  <button onclick="runAllTests()">🚀 Run All Tests</button>
+  <button class="secondary" onclick="copyResults()">📋 Copy JSON</button>
+  <button class="secondary" onclick="downloadResults()">💾 Download</button>
+  <button class="secondary" onclick="location.reload()">🔄 Refresh</button>
 </div>
 
 <div id="loading" class="loading" style="display: none;">
   <div class="spinner"></div>
-  <p>Fetching HTTP headers and collecting JS data...</p>
+  <p>Running comprehensive tests...</p>
 </div>
 
 <div id="results" style="display: none;">
+  <!-- Detection Score -->
+  <div class="panel" style="text-align: center;">
+    <div class="detection-score" id="detection-score">--</div>
+    <div style="color: #8b949e;">Consistency Score (higher is better)</div>
+    <div id="detected-platform" style="margin-top: 10px;"></div>
+  </div>
+
   <!-- Summary Cards -->
   <div class="summary" id="summary"></div>
 
-  <!-- Detection Alerts -->
+  <!-- Critical Alerts -->
   <div class="alerts" id="alerts"></div>
 
-  <!-- Comparison Table -->
-  <h2>📊 Detailed Comparison</h2>
+  <!-- Test Categories -->
+  <h2>📊 1. HTTP Headers vs JavaScript APIs</h2>
   <div class="panel">
-    <table class="comparison-table" id="comparison-table">
-      <thead>
-      <tr>
-        <th>Parameter</th>
-        <th>HTTP Header</th>
-        <th>JavaScript API</th>
-        <th>Status</th>
-      </tr>
-      </thead>
-      <tbody id="comparison-body"></tbody>
+    <table id="http-js-table">
+      <thead><tr><th>Parameter</th><th>HTTP Header</th><th>JavaScript API</th><th>Status</th></tr></thead>
+      <tbody id="http-js-body"></tbody>
     </table>
   </div>
 
-  <!-- Side by side data -->
-  <div class="container">
-    <div class="panel">
-      <h3><span class="icon">🌐</span> HTTP Headers (Server-side)</h3>
-      <table id="http-table">
-        <thead>
-        <tr><th>Header</th><th>Value</th></tr>
-        </thead>
-        <tbody id="http-body"></tbody>
-      </table>
-    </div>
-
-    <div class="panel">
-      <h3><span class="icon">⚡</span> JavaScript APIs (Client-side)</h3>
-      <table id="js-table">
-        <thead>
-        <tr><th>API</th><th>Value</th></tr>
-        </thead>
-        <tbody id="js-body"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- High Entropy Values -->
-  <h2>🔐 High Entropy Client Hints</h2>
+  <h2>📱 2. Mobile vs Desktop Indicators</h2>
   <div class="panel">
-    <p style="color: #8b949e; font-size: 12px; margin-bottom: 15px;">
-      These values are obtained via navigator.userAgentData.getHighEntropyValues()
-    </p>
-    <table id="high-entropy-table">
-      <thead>
-      <tr><th>Property</th><th>Value</th></tr>
-      </thead>
-      <tbody id="high-entropy-body"></tbody>
+    <table id="mobile-table">
+      <thead><tr><th>Check</th><th>Value</th><th>Expected (Mobile)</th><th>Expected (Desktop)</th><th>Status</th></tr></thead>
+      <tbody id="mobile-body"></tbody>
     </table>
   </div>
 
-  <!-- Raw JSON -->
+  <h2>🖥️ 3. Screen & Display Consistency</h2>
+  <div class="panel">
+    <table id="screen-table">
+      <thead><tr><th>Parameter</th><th>Value</th><th>Analysis</th></tr></thead>
+      <tbody id="screen-body"></tbody>
+    </table>
+  </div>
+
+  <h2>🎮 4. Hardware & Sensors</h2>
+  <div class="panel">
+    <table id="hardware-table">
+      <thead><tr><th>Feature</th><th>Status</th><th>Expected (Android)</th><th>Notes</th></tr></thead>
+      <tbody id="hardware-body"></tbody>
+    </table>
+  </div>
+
+  <h2>🔌 5. Plugins & MimeTypes</h2>
+  <div class="panel">
+    <table id="plugins-table">
+      <thead><tr><th>Check</th><th>Value</th><th>Expected (Mobile)</th><th>Status</th></tr></thead>
+      <tbody id="plugins-body"></tbody>
+    </table>
+  </div>
+
+  <h2>🌐 6. WebGL & Graphics</h2>
+  <div class="panel">
+    <table id="webgl-table">
+      <thead><tr><th>Parameter</th><th>Value</th><th>Analysis</th></tr></thead>
+      <tbody id="webgl-body"></tbody>
+    </table>
+  </div>
+
+  <h2>🔒 7. Permissions & Feature Policy</h2>
+  <div class="panel">
+    <table id="permissions-table">
+      <thead><tr><th>Feature</th><th>Allowed</th><th>Expected (Android)</th><th>Status</th></tr></thead>
+      <tbody id="permissions-body"></tbody>
+    </table>
+  </div>
+
+  <h2>🤖 8. Automation Detection</h2>
+  <div class="panel">
+    <table id="automation-table">
+      <thead><tr><th>Check</th><th>Value</th><th>Suspicious?</th></tr></thead>
+      <tbody id="automation-body"></tbody>
+    </table>
+  </div>
+
+  <h2>🎯 9. CSS Media Queries</h2>
+  <div class="panel">
+    <table id="media-table">
+      <thead><tr><th>Query</th><th>Result</th><th>Expected (Mobile)</th><th>Status</th></tr></thead>
+      <tbody id="media-body"></tbody>
+    </table>
+  </div>
+
+  <h2>⏱️ 10. Timing Analysis</h2>
+  <div class="panel">
+    <table id="timing-table">
+      <thead><tr><th>Operation</th><th>Time (ms)</th><th>Analysis</th></tr></thead>
+      <tbody id="timing-body"></tbody>
+    </table>
+  </div>
+
   <h2>📄 Raw Data</h2>
-  <div class="raw-data">
-    <button class="copy-btn secondary" onclick="copyResults()">Copy JSON</button>
+  <div class="panel">
+    <button class="secondary" onclick="copyResults()" style="float: right; margin-bottom: 10px;">Copy JSON</button>
     <pre id="raw-json"></pre>
   </div>
 </div>
 
 <script>
-  // Global results storage
-  let testResults = {
-    timestamp: null,
-    httpHeaders: {},
-    jsData: {},
-    highEntropy: {},
-    comparison: [],
-    alerts: [],
-    score: { matches: 0, mismatches: 0, warnings: 0 }
-  };
+  let allResults = {};
 
-  // Параметры для сравнения
-  const COMPARISON_MAP = [
-    {
-      name: 'User-Agent',
-      httpHeader: 'user-agent',
-      jsApi: 'navigator.userAgent',
-      getJs: () => navigator.userAgent,
-      compare: (http, js) => http === js
-    },
-    {
-      name: 'Platform',
-      httpHeader: 'sec-ch-ua-platform',
-      jsApi: 'userAgentData.platform',
-      getJs: () => navigator.userAgentData?.platform,
-      compare: (http, js) => {
-        if (!http || !js) return null;
-        // HTTP: "Android", JS: Android (без кавычек)
-        const httpClean = http.replace(/"/g, '');
-        return httpClean === js;
-      }
-    },
-    {
-      name: 'Mobile',
-      httpHeader: 'sec-ch-ua-mobile',
-      jsApi: 'userAgentData.mobile',
-      getJs: () => navigator.userAgentData?.mobile,
-      compare: (http, js) => {
-        if (http === undefined || js === undefined) return null;
-        // HTTP: ?1 or ?0, JS: true/false
-        const httpBool = http === '?1';
-        return httpBool === js;
-      }
-    },
-    {
-      name: 'Brands',
-      httpHeader: 'sec-ch-ua',
-      jsApi: 'userAgentData.brands',
-      getJs: () => {
-        const brands = navigator.userAgentData?.brands;
-        if (!brands) return null;
-        return brands.map(b => `"${b.brand}";v="${b.version}"`).join(', ');
-      },
-      compare: (http, js) => {
-        if (!http || !js) return null;
-        // Сравниваем без пробелов
-        const httpNorm = http.replace(/\s/g, '');
-        const jsNorm = js.replace(/\s/g, '');
-        return httpNorm === jsNorm;
-      }
-    },
-    {
-      name: 'Architecture',
-      httpHeader: 'sec-ch-ua-arch',
-      jsApi: 'highEntropy.architecture',
-      getJs: async () => {
-        if (!navigator.userAgentData?.getHighEntropyValues) return null;
-        const data = await navigator.userAgentData.getHighEntropyValues(['architecture']);
-        return data.architecture;
-      },
-      compare: (http, js) => {
-        if (http === undefined) return null;
-        const httpClean = http.replace(/"/g, '');
-        return httpClean === (js || '');
-      },
-      async: true
-    },
-    {
-      name: 'Bitness',
-      httpHeader: 'sec-ch-ua-bitness',
-      jsApi: 'highEntropy.bitness',
-      getJs: async () => {
-        if (!navigator.userAgentData?.getHighEntropyValues) return null;
-        const data = await navigator.userAgentData.getHighEntropyValues(['bitness']);
-        return data.bitness;
-      },
-      compare: (http, js) => {
-        if (http === undefined) return null;
-        const httpClean = http.replace(/"/g, '');
-        return httpClean === (js || '');
-      },
-      async: true
-    },
-    {
-      name: 'Model',
-      httpHeader: 'sec-ch-ua-model',
-      jsApi: 'highEntropy.model',
-      getJs: async () => {
-        if (!navigator.userAgentData?.getHighEntropyValues) return null;
-        const data = await navigator.userAgentData.getHighEntropyValues(['model']);
-        return data.model;
-      },
-      compare: (http, js) => {
-        if (http === undefined) return null;
-        const httpClean = http.replace(/"/g, '');
-        return httpClean === (js || '');
-      },
-      async: true
-    },
-    {
-      name: 'Platform Version',
-      httpHeader: 'sec-ch-ua-platform-version',
-      jsApi: 'highEntropy.platformVersion',
-      getJs: async () => {
-        if (!navigator.userAgentData?.getHighEntropyValues) return null;
-        const data = await navigator.userAgentData.getHighEntropyValues(['platformVersion']);
-        return data.platformVersion;
-      },
-      compare: (http, js) => {
-        if (http === undefined) return null;
-        const httpClean = http.replace(/"/g, '');
-        return httpClean === (js || '');
-      },
-      async: true
-    },
-    {
-      name: 'Full Version List',
-      httpHeader: 'sec-ch-ua-full-version-list',
-      jsApi: 'highEntropy.fullVersionList',
-      getJs: async () => {
-        if (!navigator.userAgentData?.getHighEntropyValues) return null;
-        const data = await navigator.userAgentData.getHighEntropyValues(['fullVersionList']);
-        if (!data.fullVersionList) return null;
-        return data.fullVersionList.map(b => `"${b.brand}";v="${b.version}"`).join(', ');
-      },
-      compare: (http, js) => {
-        if (!http || !js) return null;
-        const httpNorm = http.replace(/\s/g, '');
-        const jsNorm = js.replace(/\s/g, '');
-        return httpNorm === jsNorm;
-      },
-      async: true
-    },
-    {
-      name: 'WoW64',
-      httpHeader: 'sec-ch-ua-wow64',
-      jsApi: 'highEntropy.wow64',
-      getJs: async () => {
-        if (!navigator.userAgentData?.getHighEntropyValues) return null;
-        const data = await navigator.userAgentData.getHighEntropyValues(['wow64']);
-        return data.wow64;
-      },
-      compare: (http, js) => {
-        if (http === undefined || js === undefined) return null;
-        const httpBool = http === '?1';
-        return httpBool === js;
-      },
-      async: true
-    },
-    {
-      name: 'Form Factors',
-      httpHeader: 'sec-ch-ua-form-factors',
-      jsApi: 'highEntropy.formFactors',
-      getJs: async () => {
-        if (!navigator.userAgentData?.getHighEntropyValues) return null;
-        try {
-          const data = await navigator.userAgentData.getHighEntropyValues(['formFactors']);
-          if (!data.formFactors) return null;
-          return data.formFactors.map(f => `"${f}"`).join(', ');
-        } catch (e) {
-          return null;
-        }
-      },
-      compare: (http, js) => {
-        if (!http || !js) return null;
-        const httpNorm = http.replace(/\s/g, '');
-        const jsNorm = js.replace(/\s/g, '');
-        return httpNorm === jsNorm;
-      },
-      async: true
-    }
-  ];
-
-  // Fetch HTTP headers
+  // ============== HTTP Headers ==============
   async function fetchHttpHeaders() {
-    const services = [
-      'https://httpbin.org/headers',
-      'https://www.httpbin.org/headers',
-    ];
-
-    for (const url of services) {
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          cache: 'no-store'
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          // httpbin returns headers in data.headers
-          return data.headers || data;
-        }
-      } catch (e) {
-        console.warn(`Failed to fetch from ${url}:`, e);
-      }
-    }
-
-    // Fallback: создаём echo endpoint через worker (если httpbin недоступен)
-    throw new Error('Could not fetch HTTP headers from any service');
-  }
-
-  // Collect JS data
-  async function collectJsData() {
-    const data = {
-      'navigator.userAgent': navigator.userAgent,
-      'navigator.platform': navigator.platform,
-      'navigator.vendor': navigator.vendor,
-      'navigator.language': navigator.language,
-      'navigator.languages': navigator.languages?.join(', '),
-      'navigator.hardwareConcurrency': navigator.hardwareConcurrency,
-      'navigator.deviceMemory': navigator.deviceMemory,
-      'navigator.maxTouchPoints': navigator.maxTouchPoints,
-    };
-
-    // UserAgentData (if available)
-    if (navigator.userAgentData) {
-      data['userAgentData.mobile'] = navigator.userAgentData.mobile;
-      data['userAgentData.platform'] = navigator.userAgentData.platform;
-      data['userAgentData.brands'] = JSON.stringify(navigator.userAgentData.brands);
-    }
-
-    return data;
-  }
-
-  // Collect high entropy values
-  async function collectHighEntropy() {
-    if (!navigator.userAgentData?.getHighEntropyValues) {
-      return { error: 'getHighEntropyValues not supported' };
-    }
-
     try {
-      const hints = [
-        'architecture',
-        'bitness',
-        'brands',
-        'fullVersionList',
-        'model',
-        'platform',
-        'platformVersion',
-        'wow64',
-        'formFactors'
-      ];
-
-      const data = await navigator.userAgentData.getHighEntropyValues(hints);
-      return data;
+      const response = await fetch('https://httpbin.org/headers', { cache: 'no-store' });
+      const data = await response.json();
+      return data.headers || {};
     } catch (e) {
       return { error: e.message };
     }
   }
 
-  // Run comparison
-  async function runComparison(httpHeaders, jsData, highEntropy) {
-    const results = [];
+  // ============== Client Hints ==============
+  async function getClientHints() {
+    const result = {
+      basic: {},
+      highEntropy: {}
+    };
 
-    // Нормализуем HTTP заголовки (lowercase keys)
-    const headers = {};
-    for (const [key, value] of Object.entries(httpHeaders)) {
-      headers[key.toLowerCase()] = value;
-    }
+    if (navigator.userAgentData) {
+      result.basic = {
+        mobile: navigator.userAgentData.mobile,
+        platform: navigator.userAgentData.platform,
+        brands: navigator.userAgentData.brands
+      };
 
-    for (const item of COMPARISON_MAP) {
-      const httpValue = headers[item.httpHeader];
-      let jsValue;
-
-      if (item.async) {
+      if (navigator.userAgentData.getHighEntropyValues) {
         try {
-          jsValue = await item.getJs();
+          result.highEntropy = await navigator.userAgentData.getHighEntropyValues([
+            'architecture', 'bitness', 'fullVersionList', 'model',
+            'platformVersion', 'wow64', 'formFactors'
+          ]);
         } catch (e) {
-          jsValue = null;
+          result.highEntropy = { error: e.message };
         }
-      } else {
-        jsValue = item.getJs();
       }
-
-      let status = 'unknown';
-      let match = null;
-
-      if (httpValue === undefined && jsValue === undefined) {
-        status = 'both-missing';
-      } else if (httpValue === undefined) {
-        status = 'http-missing';
-      } else if (jsValue === undefined || jsValue === null) {
-        status = 'js-missing';
-      } else {
-        match = item.compare(httpValue, jsValue);
-        status = match ? 'match' : 'mismatch';
-      }
-
-      results.push({
-        name: item.name,
-        httpHeader: item.httpHeader,
-        jsApi: item.jsApi,
-        httpValue: httpValue,
-        jsValue: jsValue,
-        status: status,
-        match: match
-      });
     }
 
-    return results;
+    return result;
   }
 
-  // Generate alerts
-  function generateAlerts(comparison) {
+  // ============== Mobile Indicators ==============
+  function getMobileIndicators() {
+    return {
+      // Touch support
+      maxTouchPoints: navigator.maxTouchPoints,
+      touchEvent: 'ontouchstart' in window,
+      touchEventConstructor: typeof TouchEvent !== 'undefined',
+
+      // Orientation
+      orientation: window.orientation,
+      orientationType: screen.orientation?.type,
+      orientationAngle: screen.orientation?.angle,
+
+      // Pointer/Hover
+      pointerCoarse: window.matchMedia('(pointer: coarse)').matches,
+      pointerFine: window.matchMedia('(pointer: fine)').matches,
+      hoverNone: window.matchMedia('(hover: none)').matches,
+      hoverHover: window.matchMedia('(hover: hover)').matches,
+      anyPointerCoarse: window.matchMedia('(any-pointer: coarse)').matches,
+      anyHoverNone: window.matchMedia('(any-hover: none)').matches,
+
+      // Display mode
+      displayModeStandalone: window.matchMedia('(display-mode: standalone)').matches,
+      displayModeBrowser: window.matchMedia('(display-mode: browser)').matches,
+
+      // Device pixel ratio
+      devicePixelRatio: window.devicePixelRatio,
+
+      // Vibration API
+      vibrationSupported: 'vibrate' in navigator,
+
+      // Connection
+      connection: navigator.connection ? {
+        effectiveType: navigator.connection.effectiveType,
+        downlink: navigator.connection.downlink,
+        rtt: navigator.connection.rtt,
+        saveData: navigator.connection.saveData,
+        type: navigator.connection.type
+      } : null,
+
+      // Battery
+      batterySupported: 'getBattery' in navigator,
+
+      // Share API
+      shareSupported: 'share' in navigator,
+      canShareSupported: 'canShare' in navigator,
+
+      // Wake Lock
+      wakeLockSupported: 'wakeLock' in navigator,
+
+      // DeviceMotion/Orientation
+      deviceMotionEvent: typeof DeviceMotionEvent !== 'undefined',
+      deviceOrientationEvent: typeof DeviceOrientationEvent !== 'undefined',
+    };
+  }
+
+  // ============== Screen Info ==============
+  function getScreenInfo() {
+    return {
+      width: screen.width,
+      height: screen.height,
+      availWidth: screen.availWidth,
+      availHeight: screen.availHeight,
+      colorDepth: screen.colorDepth,
+      pixelDepth: screen.pixelDepth,
+      devicePixelRatio: window.devicePixelRatio,
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      outerWidth: window.outerWidth,
+      outerHeight: window.outerHeight,
+      screenX: window.screenX,
+      screenY: window.screenY,
+      orientation: screen.orientation?.type,
+
+      // Computed
+      physicalWidth: Math.round(screen.width * window.devicePixelRatio),
+      physicalHeight: Math.round(screen.height * window.devicePixelRatio),
+      aspectRatio: (screen.width / screen.height).toFixed(3),
+      isPortrait: screen.height > screen.width,
+    };
+  }
+
+  // ============== Hardware ==============
+  async function getHardwareInfo() {
+    const info = {
+      hardwareConcurrency: navigator.hardwareConcurrency,
+      deviceMemory: navigator.deviceMemory,
+      platform: navigator.platform,
+
+      // Sensors
+      accelerometer: typeof Accelerometer !== 'undefined',
+      gyroscope: typeof Gyroscope !== 'undefined',
+      magnetometer: typeof Magnetometer !== 'undefined',
+      absoluteOrientationSensor: typeof AbsoluteOrientationSensor !== 'undefined',
+      relativeOrientationSensor: typeof RelativeOrientationSensor !== 'undefined',
+      ambientLightSensor: typeof AmbientLightSensor !== 'undefined',
+
+      // Bluetooth
+      bluetooth: 'bluetooth' in navigator,
+
+      // USB
+      usb: 'usb' in navigator,
+
+      // Serial
+      serial: 'serial' in navigator,
+
+      // HID
+      hid: 'hid' in navigator,
+
+      // Gamepad
+      getGamepads: 'getGamepads' in navigator,
+
+      // MIDI
+      requestMIDIAccess: 'requestMIDIAccess' in navigator,
+
+      // NFC
+      nfc: 'NDEFReader' in window,
+    };
+
+    // Battery info
+    if ('getBattery' in navigator) {
+      try {
+        const battery = await navigator.getBattery();
+        info.battery = {
+          charging: battery.charging,
+          level: battery.level,
+          chargingTime: battery.chargingTime,
+          dischargingTime: battery.dischargingTime
+        };
+      } catch (e) {
+        info.battery = { error: e.message };
+      }
+    }
+
+    return info;
+  }
+
+  // ============== Plugins & MimeTypes ==============
+  function getPluginsInfo() {
+    return {
+      pluginsLength: navigator.plugins.length,
+      plugins: Array.from(navigator.plugins).map(p => ({
+        name: p.name,
+        filename: p.filename,
+        description: p.description
+      })),
+      mimeTypesLength: navigator.mimeTypes.length,
+      mimeTypes: Array.from(navigator.mimeTypes).map(m => ({
+        type: m.type,
+        description: m.description,
+        suffixes: m.suffixes
+      })),
+      pdfViewerEnabled: navigator.pdfViewerEnabled,
+    };
+  }
+
+  // ============== WebGL ==============
+  function getWebGLInfo() {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+    if (!gl) return { error: 'WebGL not supported' };
+
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+
+    return {
+      vendor: gl.getParameter(gl.VENDOR),
+      renderer: gl.getParameter(gl.RENDERER),
+      version: gl.getParameter(gl.VERSION),
+      shadingLanguageVersion: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+      unmaskedVendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : null,
+      unmaskedRenderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : null,
+      maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+      maxViewportDims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
+      maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+      aliasedLineWidthRange: gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE),
+      aliasedPointSizeRange: gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE),
+      extensions: gl.getSupportedExtensions()?.length || 0,
+    };
+  }
+
+  // ============== Feature Policy ==============
+  async function getFeaturePolicyInfo() {
+    const features = [
+      'accelerometer', 'gyroscope', 'magnetometer', 'geolocation',
+      'camera', 'microphone', 'bluetooth', 'usb', 'serial', 'hid',
+      'midi', 'gamepad', 'fullscreen', 'autoplay', 'payment',
+      'picture-in-picture', 'screen-wake-lock', 'web-share',
+      'display-capture', 'idle-detection', 'local-fonts',
+      'speaker-selection', 'window-management', 'xr-spatial-tracking'
+    ];
+
+    const result = {};
+    const policy = document.featurePolicy || document.permissionsPolicy;
+
+    if (policy && policy.allowsFeature) {
+      for (const feature of features) {
+        try {
+          result[feature] = policy.allowsFeature(feature);
+        } catch (e) {
+          result[feature] = 'error';
+        }
+      }
+    } else {
+      result.error = 'Feature Policy API not available';
+    }
+
+    return result;
+  }
+
+  // ============== Automation Detection ==============
+  function getAutomationIndicators() {
+    return {
+      webdriver: navigator.webdriver,
+
+      // Chrome specific
+      chromeRuntime: !!(window.chrome && window.chrome.runtime),
+      chromeLoadTimes: !!(window.chrome && window.chrome.loadTimes),
+      chromeCsi: !!(window.chrome && window.chrome.csi),
+      chromeApp: !!(window.chrome && window.chrome.app),
+
+      // Playwright/Puppeteer detection
+      __playwright: typeof window.__playwright !== 'undefined',
+      __puppeteer: typeof window.__puppeteer !== 'undefined',
+      __selenium: typeof window.__selenium !== 'undefined',
+      __webdriver: typeof window.__webdriver !== 'undefined',
+      __driver: typeof window.__driver !== 'undefined',
+
+      // Headless indicators
+      pluginsInconsistent: navigator.plugins.length === 0 && !/Mobile|Android/i.test(navigator.userAgent),
+      languagesInconsistent: !navigator.languages || navigator.languages.length === 0,
+
+      // Permission anomalies
+      notificationPermission: Notification?.permission,
+
+      // Document properties
+      documentHidden: document.hidden,
+      documentVisibilityState: document.visibilityState,
+
+      // Window properties
+      outerWidthZero: window.outerWidth === 0,
+      outerHeightZero: window.outerHeight === 0,
+
+      // Error stack trace
+      errorStackContainsNative: (() => {
+        try {
+          throw new Error();
+        } catch (e) {
+          return e.stack?.includes('native') || false;
+        }
+      })(),
+
+      // Prototype tampering
+      toStringTampered: (() => {
+        try {
+          const native = Function.prototype.toString.call(Function.prototype.toString);
+          return !native.includes('[native code]');
+        } catch (e) {
+          return true;
+        }
+      })(),
+
+      // Console detection
+      consoleDebugTampered: (() => {
+        const startTime = performance.now();
+        console.debug('test');
+        return performance.now() - startTime > 100; // Suspicious if console is slow
+      })(),
+    };
+  }
+
+  // ============== CSS Media Queries ==============
+  function getMediaQueries() {
+    const queries = {
+      // Pointer and hover
+      'pointer: none': window.matchMedia('(pointer: none)').matches,
+      'pointer: coarse': window.matchMedia('(pointer: coarse)').matches,
+      'pointer: fine': window.matchMedia('(pointer: fine)').matches,
+      'hover: none': window.matchMedia('(hover: none)').matches,
+      'hover: hover': window.matchMedia('(hover: hover)').matches,
+      'any-pointer: coarse': window.matchMedia('(any-pointer: coarse)').matches,
+      'any-hover: none': window.matchMedia('(any-hover: none)').matches,
+
+      // Display
+      'display-mode: browser': window.matchMedia('(display-mode: browser)').matches,
+      'display-mode: standalone': window.matchMedia('(display-mode: standalone)').matches,
+
+      // Orientation
+      'orientation: portrait': window.matchMedia('(orientation: portrait)').matches,
+      'orientation: landscape': window.matchMedia('(orientation: landscape)').matches,
+
+      // Color scheme
+      'prefers-color-scheme: dark': window.matchMedia('(prefers-color-scheme: dark)').matches,
+      'prefers-color-scheme: light': window.matchMedia('(prefers-color-scheme: light)').matches,
+
+      // Reduced motion
+      'prefers-reduced-motion: reduce': window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+
+      // Resolution
+      'min-resolution: 2dppx': window.matchMedia('(min-resolution: 2dppx)').matches,
+      'min-resolution: 3dppx': window.matchMedia('(min-resolution: 3dppx)').matches,
+
+      // Width
+      'max-width: 768px': window.matchMedia('(max-width: 768px)').matches,
+      'max-width: 480px': window.matchMedia('(max-width: 480px)').matches,
+    };
+
+    return queries;
+  }
+
+  // ============== Timing Analysis ==============
+  async function getTimingInfo() {
+    const timing = {};
+
+    // navigator.userAgent access time
+    const uaStart = performance.now();
+    for (let i = 0; i < 1000; i++) {
+      const ua = navigator.userAgent;
+    }
+    timing.userAgentAccess = performance.now() - uaStart;
+
+    // Canvas fingerprint time
+    const canvasStart = performance.now();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = "14px 'Arial'";
+    ctx.fillText('test', 2, 2);
+    canvas.toDataURL();
+    timing.canvasFingerprint = performance.now() - canvasStart;
+
+    // WebGL init time
+    const webglStart = performance.now();
+    const glCanvas = document.createElement('canvas');
+    const gl = glCanvas.getContext('webgl');
+    timing.webglInit = performance.now() - webglStart;
+
+    // getHighEntropyValues time
+    if (navigator.userAgentData?.getHighEntropyValues) {
+      const heStart = performance.now();
+      await navigator.userAgentData.getHighEntropyValues(['platform']);
+      timing.highEntropyValues = performance.now() - heStart;
+    }
+
+    // Performance timing
+    if (performance.timing) {
+      const pt = performance.timing;
+      timing.domContentLoaded = pt.domContentLoadedEventEnd - pt.navigationStart;
+      timing.pageLoad = pt.loadEventEnd - pt.navigationStart;
+    }
+
+    return timing;
+  }
+
+  // ============== Analysis Functions ==============
+  function detectPlatform(data) {
+    const ua = navigator.userAgent;
+    const platform = navigator.userAgentData?.platform || navigator.platform;
+
+    if (/Android/i.test(ua)) return { type: 'mobile', os: 'Android' };
+    if (/iPhone|iPad|iPod/i.test(ua)) return { type: 'mobile', os: 'iOS' };
+    if (/Windows/i.test(platform)) return { type: 'desktop', os: 'Windows' };
+    if (/Mac/i.test(platform)) return { type: 'desktop', os: 'macOS' };
+    if (/Linux/i.test(platform) && !/Android/i.test(ua)) return { type: 'desktop', os: 'Linux' };
+
+    return { type: 'unknown', os: 'unknown' };
+  }
+
+  function analyzeConsistency(data) {
     const alerts = [];
+    const platform = detectPlatform(data);
+    const isMobile = platform.type === 'mobile';
+    const isAndroid = platform.os === 'Android';
 
-    // Check for critical mismatches
-    const criticalParams = ['User-Agent', 'Platform', 'Mobile', 'Architecture', 'Bitness'];
-
-    for (const item of comparison) {
-      if (item.status === 'mismatch') {
-        const isCritical = criticalParams.includes(item.name);
-        alerts.push({
-          type: isCritical ? 'error' : 'warning',
-          title: `${item.name} Mismatch Detected`,
-          desc: `HTTP: "${item.httpValue}" vs JS: "${item.jsValue}"`,
-          critical: isCritical
-        });
-      }
+    // 1. Touch points check
+    if (isMobile && data.mobile.maxTouchPoints < 1) {
+      alerts.push({
+        type: 'error',
+        title: 'Touch Points Mismatch',
+        desc: `Mobile device should have touch points > 0, got: ${data.mobile.maxTouchPoints}`
+      });
     }
-
-    // Check for Android-specific issues
-    const platform = comparison.find(c => c.name === 'Platform');
-    const arch = comparison.find(c => c.name === 'Architecture');
-    const mobile = comparison.find(c => c.name === 'Mobile');
-
-    if (platform?.jsValue === 'Android') {
-      // Android should have empty architecture
-      if (arch?.jsValue && arch.jsValue !== '') {
-        alerts.push({
-          type: 'error',
-          title: 'Invalid Android Architecture',
-          desc: `Architecture should be empty on Android, got: "${arch.jsValue}"`,
-          critical: true
-        });
-      }
-
-      // Android should be mobile
-      if (mobile?.jsValue === false) {
-        alerts.push({
-          type: 'error',
-          title: 'Invalid Mobile Flag for Android',
-          desc: 'Mobile flag is false but platform is Android',
-          critical: true
-        });
-      }
-    }
-
-    // Check for Desktop pretending to be Mobile
-    if (platform?.jsValue === 'Linux' && mobile?.jsValue === true) {
+    if (!isMobile && data.mobile.maxTouchPoints > 0 && data.mobile.maxTouchPoints !== 1) {
       alerts.push({
         type: 'warning',
-        title: 'Suspicious Configuration',
-        desc: 'Platform is Linux but mobile flag is true',
-        critical: false
+        title: 'Unexpected Touch Points',
+        desc: `Desktop typically has 0-1 touch points, got: ${data.mobile.maxTouchPoints}`
       });
     }
 
-    // No issues found
+    // 2. Plugins check
+    if (isMobile && data.plugins.pluginsLength > 0) {
+      alerts.push({
+        type: 'error',
+        title: 'Plugins on Mobile',
+        desc: `Mobile browsers should have 0 plugins, got: ${data.plugins.pluginsLength}`
+      });
+    }
+
+    // 3. Pointer media query
+    if (isMobile && !data.mediaQueries['pointer: coarse']) {
+      alerts.push({
+        type: 'error',
+        title: 'Pointer Type Mismatch',
+        desc: 'Mobile should have coarse pointer, but pointer: coarse is false'
+      });
+    }
+    if (!isMobile && data.mediaQueries['pointer: coarse'] && !data.mediaQueries['pointer: fine']) {
+      alerts.push({
+        type: 'warning',
+        title: 'Pointer Type Suspicious',
+        desc: 'Desktop typically has fine pointer'
+      });
+    }
+
+    // 4. Hover check
+    if (isMobile && data.mediaQueries['hover: hover']) {
+      alerts.push({
+        type: 'warning',
+        title: 'Hover Capability on Mobile',
+        desc: 'Mobile touch devices typically don\'t support hover'
+      });
+    }
+
+    // 5. Architecture check for Android
+    if (isAndroid && data.clientHints.highEntropy.architecture && data.clientHints.highEntropy.architecture !== '') {
+      alerts.push({
+        type: 'error',
+        title: 'Android Architecture Should Be Empty',
+        desc: `Got architecture: "${data.clientHints.highEntropy.architecture}"`
+      });
+    }
+
+    // 6. Serial/HID on mobile
+    if (isMobile && data.hardware.serial) {
+      alerts.push({
+        type: 'warning',
+        title: 'Serial API on Mobile',
+        desc: 'Serial API is typically not available on mobile'
+      });
+    }
+    if (isMobile && data.hardware.hid) {
+      alerts.push({
+        type: 'warning',
+        title: 'HID API on Mobile',
+        desc: 'HID API is typically not available on mobile'
+      });
+    }
+
+    // 7. WebGL vendor check
+    const webglVendor = data.webgl.unmaskedVendor || data.webgl.vendor;
+    if (isAndroid && webglVendor) {
+      const mobileGPUs = ['Qualcomm', 'ARM', 'Mali', 'Adreno', 'PowerVR', 'Imagination', 'Google'];
+      const hasMobileGPU = mobileGPUs.some(g => webglVendor.includes(g));
+      if (!hasMobileGPU) {
+        alerts.push({
+          type: 'error',
+          title: 'WebGL Vendor Mismatch',
+          desc: `Android device has desktop GPU vendor: "${webglVendor}"`
+        });
+      }
+    }
+
+    // 8. Screen resolution check
+    const screenWidth = data.screen.width;
+    const screenHeight = data.screen.height;
+    if (isMobile && screenWidth > 2560) {
+      alerts.push({
+        type: 'warning',
+        title: 'Unusual Mobile Resolution',
+        desc: `Screen width ${screenWidth} is very high for mobile`
+      });
+    }
+
+    // 9. Automation indicators
+    if (data.automation.webdriver) {
+      alerts.push({
+        type: 'error',
+        title: 'WebDriver Detected',
+        desc: 'navigator.webdriver is true - automation detected'
+      });
+    }
+    if (data.automation.toStringTampered) {
+      alerts.push({
+        type: 'error',
+        title: 'Prototype Tampering Detected',
+        desc: 'Function.prototype.toString appears to be modified'
+      });
+    }
+
+    // 10. Connection type
+    if (isMobile && data.mobile.connection && data.mobile.connection.type === 'ethernet') {
+      alerts.push({
+        type: 'warning',
+        title: 'Ethernet on Mobile',
+        desc: 'Mobile device reporting ethernet connection'
+      });
+    }
+
+    // 11. Device pixel ratio
+    if (isMobile && data.mobile.devicePixelRatio < 1.5) {
+      alerts.push({
+        type: 'warning',
+        title: 'Low DPI for Mobile',
+        desc: `DPR ${data.mobile.devicePixelRatio} is unusually low for modern mobile devices`
+      });
+    }
+
+    // 12. Battery API on desktop
+    if (!isMobile && data.hardware.battery && !data.hardware.battery.error) {
+      // This is actually fine, just informational
+    }
+
+    // 13. Local fonts on mobile
+    if (isMobile && data.featurePolicy['local-fonts'] === true) {
+      alerts.push({
+        type: 'warning',
+        title: 'Local Fonts on Mobile',
+        desc: 'Local Font Access API is typically not available on mobile'
+      });
+    }
+
+    // Success message if no issues
     if (alerts.length === 0) {
       alerts.push({
         type: 'success',
-        title: 'All Checks Passed',
-        desc: 'HTTP headers and JavaScript APIs are synchronized correctly',
-        critical: false
+        title: 'All Consistency Checks Passed',
+        desc: 'No obvious emulation indicators detected'
       });
     }
 
     return alerts;
   }
 
-  // Calculate score
-  function calculateScore(comparison) {
-    let matches = 0;
-    let mismatches = 0;
-    let warnings = 0;
+  function calculateScore(data, alerts) {
+    let score = 100;
 
-    for (const item of comparison) {
-      if (item.status === 'match') matches++;
-      else if (item.status === 'mismatch') mismatches++;
-      else warnings++;
+    for (const alert of alerts) {
+      if (alert.type === 'error') score -= 15;
+      else if (alert.type === 'warning') score -= 5;
     }
 
-    return { matches, mismatches, warnings, total: comparison.length };
+    return Math.max(0, score);
   }
 
-  // Render functions
-  function renderSummary(score) {
-    const html = `
-        <div class="summary-card ${score.mismatches === 0 ? 'success' : 'error'}">
-          <div class="number" style="color: ${score.mismatches === 0 ? '#3fb950' : '#f85149'}">
-            ${score.mismatches === 0 ? '✓' : score.mismatches}
-          </div>
-          <div class="label">Mismatches</div>
-        </div>
-        <div class="summary-card success">
-          <div class="number" style="color: #3fb950">${score.matches}</div>
-          <div class="label">Matches</div>
-        </div>
-        <div class="summary-card warning">
-          <div class="number" style="color: #d29922">${score.warnings}</div>
-          <div class="label">Unknown/Missing</div>
-        </div>
-        <div class="summary-card">
-          <div class="number" style="color: #58a6ff">${score.total}</div>
-          <div class="label">Total Checks</div>
-        </div>
-      `;
-    document.getElementById('summary').innerHTML = html;
-  }
-
-  function renderAlerts(alerts) {
-    const html = alerts.map(alert => `
-        <div class="alert alert-${alert.type}">
-          <span class="alert-icon">${alert.type === 'error' ? '❌' : alert.type === 'warning' ? '⚠️' : '✅'}</span>
-          <div class="alert-content">
-            <div class="alert-title">${alert.title}</div>
-            <div class="alert-desc">${alert.desc}</div>
-          </div>
-        </div>
-      `).join('');
-    document.getElementById('alerts').innerHTML = html;
-  }
-
-  function renderComparison(comparison) {
-    const html = comparison.map(item => {
-      let statusClass = '';
-      let statusIcon = '';
-
-      switch (item.status) {
-        case 'match':
-          statusClass = 'match';
-          statusIcon = '<span class="status-icon status-match">✓</span> Match';
-          break;
-        case 'mismatch':
-          statusClass = 'mismatch';
-          statusIcon = '<span class="status-icon status-mismatch">✗</span> Mismatch';
-          break;
-        default:
-          statusClass = 'warning';
-          statusIcon = '<span class="status-icon status-warning">?</span> ' + item.status;
-      }
-
-      return `
-          <tr class="${statusClass}">
-            <td><strong>${item.name}</strong><br><small style="color: #8b949e">${item.httpHeader}</small></td>
-            <td class="value">${item.httpValue !== undefined ? escapeHtml(String(item.httpValue)) : '<span class="missing">not sent</span>'}</td>
-            <td class="value">${item.jsValue !== undefined && item.jsValue !== null ? escapeHtml(String(item.jsValue)) : '<span class="missing">not available</span>'}</td>
-            <td>${statusIcon}</td>
-          </tr>
-        `;
-    }).join('');
-    document.getElementById('comparison-body').innerHTML = html;
-  }
-
-  function renderHttpHeaders(headers) {
-    const relevantHeaders = [
-      'user-agent',
-      'sec-ch-ua',
-      'sec-ch-ua-mobile',
-      'sec-ch-ua-platform',
-      'sec-ch-ua-arch',
-      'sec-ch-ua-bitness',
-      'sec-ch-ua-model',
-      'sec-ch-ua-platform-version',
-      'sec-ch-ua-full-version-list',
-      'sec-ch-ua-wow64',
-      'sec-ch-ua-form-factors',
-      'accept-language',
-      'accept-encoding',
-      'sec-fetch-dest',
-      'sec-fetch-mode',
-      'sec-fetch-site'
-    ];
-
-    const html = Object.entries(headers)
-            .sort((a, b) => {
-              const aIdx = relevantHeaders.indexOf(a[0].toLowerCase());
-              const bIdx = relevantHeaders.indexOf(b[0].toLowerCase());
-              if (aIdx === -1 && bIdx === -1) return a[0].localeCompare(b[0]);
-              if (aIdx === -1) return 1;
-              if (bIdx === -1) return -1;
-              return aIdx - bIdx;
-            })
-            .map(([key, value]) => `
-          <tr>
-            <td>${escapeHtml(key)}</td>
-            <td class="value">${escapeHtml(String(value))}</td>
-          </tr>
-        `).join('');
-    document.getElementById('http-body').innerHTML = html;
-  }
-
-  function renderJsData(data) {
-    const html = Object.entries(data)
-            .map(([key, value]) => `
-          <tr>
-            <td>${escapeHtml(key)}</td>
-            <td class="value">${value !== undefined ? escapeHtml(String(value)) : '<span class="missing">undefined</span>'}</td>
-          </tr>
-        `).join('');
-    document.getElementById('js-body').innerHTML = html;
-  }
-
-  function renderHighEntropy(data) {
-    if (data.error) {
-      document.getElementById('high-entropy-body').innerHTML = `
-          <tr><td colspan="2" class="missing">${escapeHtml(data.error)}</td></tr>
-        `;
-      return;
-    }
-
-    const html = Object.entries(data)
-            .map(([key, value]) => {
-              let displayValue = value;
-              if (Array.isArray(value)) {
-                displayValue = JSON.stringify(value);
-              } else if (typeof value === 'object' && value !== null) {
-                displayValue = JSON.stringify(value);
-              }
-              return `
-            <tr>
-              <td>${escapeHtml(key)}</td>
-              <td class="value">${displayValue !== undefined ? escapeHtml(String(displayValue)) : '<span class="missing">undefined</span>'}</td>
-            </tr>
-          `;
-            }).join('');
-    document.getElementById('high-entropy-body').innerHTML = html;
-  }
-
+  // ============== Render Functions ==============
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  // Main test function
-  async function runTest() {
+  function renderSummary(data, alerts) {
+    const score = calculateScore(data, alerts);
+    const errors = alerts.filter(a => a.type === 'error').length;
+    const warnings = alerts.filter(a => a.type === 'warning').length;
+    const platform = detectPlatform(data);
+
+    // Score
+    const scoreEl = document.getElementById('detection-score');
+    scoreEl.textContent = score + '/100';
+    scoreEl.className = 'detection-score ' + (score >= 80 ? 'score-good' : score >= 50 ? 'score-medium' : 'score-bad');
+
+    // Platform badge
+    const platformEl = document.getElementById('detected-platform');
+    const tagClass = platform.os === 'Android' ? 'tag-android' :
+            platform.os === 'iOS' ? 'tag-ios' :
+                    platform.os === 'Windows' ? 'tag-windows' :
+                            platform.os === 'Linux' ? 'tag-linux' :
+                                    platform.os === 'macOS' ? 'tag-mac' : '';
+    platformEl.innerHTML = `
+        Detected: <span class="tag ${platform.type === 'mobile' ? 'tag-mobile' : 'tag-desktop'}">${platform.type}</span>
+        <span class="tag ${tagClass}">${platform.os}</span>
+      `;
+
+    // Summary cards
+    document.getElementById('summary').innerHTML = `
+        <div class="summary-card ${errors === 0 ? 'success' : 'error'}">
+          <div class="number" style="color: ${errors === 0 ? '#3fb950' : '#f85149'}">${errors}</div>
+          <div class="label">Critical Issues</div>
+        </div>
+        <div class="summary-card ${warnings === 0 ? 'success' : 'warning'}">
+          <div class="number" style="color: ${warnings === 0 ? '#3fb950' : '#d29922'}">${warnings}</div>
+          <div class="label">Warnings</div>
+        </div>
+        <div class="summary-card">
+          <div class="number" style="color: #58a6ff">${data.mobile.maxTouchPoints}</div>
+          <div class="label">Touch Points</div>
+        </div>
+        <div class="summary-card">
+          <div class="number" style="color: #58a6ff">${data.plugins.pluginsLength}</div>
+          <div class="label">Plugins</div>
+        </div>
+        <div class="summary-card">
+          <div class="number" style="color: #58a6ff">${data.mobile.devicePixelRatio}</div>
+          <div class="label">DPR</div>
+        </div>
+      `;
+  }
+
+  function renderAlerts(alerts) {
+    document.getElementById('alerts').innerHTML = alerts.map(alert => `
+        <div class="alert alert-${alert.type}">
+          <span class="alert-icon">${alert.type === 'error' ? '❌' : alert.type === 'warning' ? '⚠️' : '✅'}</span>
+          <div class="alert-content">
+            <div class="alert-title">${escapeHtml(alert.title)}</div>
+            <div class="alert-desc">${escapeHtml(alert.desc)}</div>
+          </div>
+        </div>
+      `).join('');
+  }
+
+  function renderHttpJsComparison(httpHeaders, clientHints) {
+    const headers = {};
+    for (const [k, v] of Object.entries(httpHeaders)) {
+      headers[k.toLowerCase()] = v;
+    }
+
+    const comparisons = [
+      { name: 'User-Agent', http: headers['user-agent'], js: navigator.userAgent },
+      { name: 'Platform', http: headers['sec-ch-ua-platform']?.replace(/"/g, ''), js: clientHints.basic.platform },
+      { name: 'Mobile', http: headers['sec-ch-ua-mobile'], js: clientHints.basic.mobile ? '?1' : '?0' },
+      { name: 'Architecture', http: headers['sec-ch-ua-arch']?.replace(/"/g, ''), js: clientHints.highEntropy.architecture || '' },
+      { name: 'Bitness', http: headers['sec-ch-ua-bitness']?.replace(/"/g, ''), js: clientHints.highEntropy.bitness || '' },
+      { name: 'Model', http: headers['sec-ch-ua-model']?.replace(/"/g, ''), js: clientHints.highEntropy.model || '' },
+    ];
+
+    document.getElementById('http-js-body').innerHTML = comparisons.map(c => {
+      const match = c.http === undefined ? 'info' : (c.http === c.js ? 'match' : 'mismatch');
+      return `
+          <tr class="${match}">
+            <td><strong>${c.name}</strong></td>
+            <td class="value">${c.http !== undefined ? escapeHtml(c.http) : '<span class="missing">not sent</span>'}</td>
+            <td class="value">${c.js !== undefined ? escapeHtml(String(c.js)) : '<span class="missing">N/A</span>'}</td>
+            <td><span class="status-${match}">${match === 'match' ? '✓' : match === 'mismatch' ? '✗' : '?'}</span></td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  function renderMobileIndicators(mobile, platform) {
+    const isMobile = platform.type === 'mobile';
+
+    const checks = [
+      { name: 'Touch Points', value: mobile.maxTouchPoints, mobile: '> 0', desktop: '0-1', check: isMobile ? mobile.maxTouchPoints > 0 : mobile.maxTouchPoints <= 1 },
+      { name: 'Touch Event', value: mobile.touchEvent, mobile: 'true', desktop: 'false', check: isMobile === mobile.touchEvent },
+      { name: 'Pointer Coarse', value: mobile.pointerCoarse, mobile: 'true', desktop: 'false', check: isMobile === mobile.pointerCoarse },
+      { name: 'Hover None', value: mobile.hoverNone, mobile: 'true', desktop: 'false', check: isMobile === mobile.hoverNone },
+      { name: 'Vibration API', value: mobile.vibrationSupported, mobile: 'true', desktop: 'false', check: !isMobile || mobile.vibrationSupported },
+      { name: 'Share API', value: mobile.shareSupported, mobile: 'true', desktop: 'varies', check: !isMobile || mobile.shareSupported },
+      { name: 'Device Pixel Ratio', value: mobile.devicePixelRatio, mobile: '≥ 2', desktop: '1-2', check: !isMobile || mobile.devicePixelRatio >= 1.5 },
+      { name: 'Connection Type', value: mobile.connection?.type || 'N/A', mobile: 'cellular/wifi', desktop: 'varies', check: true },
+    ];
+
+    document.getElementById('mobile-body').innerHTML = checks.map(c => `
+        <tr class="${c.check ? 'match' : 'mismatch'}">
+          <td><strong>${c.name}</strong></td>
+          <td class="value">${escapeHtml(String(c.value))}</td>
+          <td>${c.mobile}</td>
+          <td>${c.desktop}</td>
+          <td><span class="status-${c.check ? 'match' : 'mismatch'}">${c.check ? '✓' : '✗'}</span></td>
+        </tr>
+      `).join('');
+  }
+
+  function renderScreen(screen) {
+    const rows = [
+      { name: 'Screen Size', value: `${screen.width} × ${screen.height}`, analysis: `Physical: ${screen.physicalWidth} × ${screen.physicalHeight}` },
+      { name: 'Available Size', value: `${screen.availWidth} × ${screen.availHeight}`, analysis: 'Minus taskbar/notch' },
+      { name: 'Window Inner', value: `${screen.innerWidth} × ${screen.innerHeight}`, analysis: 'Viewport size' },
+      { name: 'Window Outer', value: `${screen.outerWidth} × ${screen.outerHeight}`, analysis: 'Including chrome' },
+      { name: 'Device Pixel Ratio', value: screen.devicePixelRatio, analysis: screen.devicePixelRatio >= 2 ? 'HiDPI' : 'Standard' },
+      { name: 'Color Depth', value: screen.colorDepth, analysis: screen.colorDepth === 24 ? 'Standard' : 'Extended' },
+      { name: 'Aspect Ratio', value: screen.aspectRatio, analysis: screen.isPortrait ? 'Portrait' : 'Landscape' },
+      { name: 'Orientation', value: screen.orientation || 'N/A', analysis: '' },
+    ];
+
+    document.getElementById('screen-body').innerHTML = rows.map(r => `
+        <tr>
+          <td><strong>${r.name}</strong></td>
+          <td class="value">${escapeHtml(String(r.value))}</td>
+          <td style="color: #8b949e">${r.analysis}</td>
+        </tr>
+      `).join('');
+  }
+
+  function renderHardware(hardware, platform) {
+    const isAndroid = platform.os === 'Android';
+
+    const features = [
+      { name: 'Accelerometer', status: hardware.accelerometer, expected: true },
+      { name: 'Gyroscope', status: hardware.gyroscope, expected: true },
+      { name: 'Magnetometer', status: hardware.magnetometer, expected: true },
+      { name: 'Bluetooth', status: hardware.bluetooth, expected: true },
+      { name: 'USB', status: hardware.usb, expected: false },
+      { name: 'Serial', status: hardware.serial, expected: false },
+      { name: 'HID', status: hardware.hid, expected: false },
+      { name: 'NFC', status: hardware.nfc, expected: true },
+      { name: 'Gamepad', status: hardware.getGamepads, expected: true },
+      { name: 'MIDI', status: hardware.requestMIDIAccess, expected: true },
+    ];
+
+    document.getElementById('hardware-body').innerHTML = features.map(f => {
+      const match = f.status === f.expected;
+      return `
+          <tr class="${match ? '' : 'warning'}">
+            <td><strong>${f.name}</strong></td>
+            <td class="value">${f.status ? '✓ Available' : '✗ Not available'}</td>
+            <td>${f.expected ? 'Available' : 'Not available'}</td>
+            <td style="color: #8b949e">${match ? '' : 'Check this'}</td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  function renderPlugins(plugins, platform) {
+    const isMobile = platform.type === 'mobile';
+
+    const checks = [
+      { name: 'Plugins Count', value: plugins.pluginsLength, expected: 0, check: !isMobile || plugins.pluginsLength === 0 },
+      { name: 'MimeTypes Count', value: plugins.mimeTypesLength, expected: 0, check: !isMobile || plugins.mimeTypesLength === 0 },
+      { name: 'PDF Viewer', value: plugins.pdfViewerEnabled, expected: false, check: !isMobile || !plugins.pdfViewerEnabled },
+    ];
+
+    document.getElementById('plugins-body').innerHTML = checks.map(c => `
+        <tr class="${c.check ? 'match' : 'mismatch'}">
+          <td><strong>${c.name}</strong></td>
+          <td class="value">${escapeHtml(String(c.value))}</td>
+          <td>${c.expected}</td>
+          <td><span class="status-${c.check ? 'match' : 'mismatch'}">${c.check ? '✓' : '✗'}</span></td>
+        </tr>
+      `).join('');
+  }
+
+  function renderWebGL(webgl) {
+    if (webgl.error) {
+      document.getElementById('webgl-body').innerHTML = `<tr><td colspan="3" class="missing">${webgl.error}</td></tr>`;
+      return;
+    }
+
+    const mobileGPUs = ['Qualcomm', 'ARM', 'Mali', 'Adreno', 'PowerVR', 'Imagination', 'Google'];
+    const vendor = webgl.unmaskedVendor || webgl.vendor;
+    const isMobileGPU = mobileGPUs.some(g => vendor?.includes(g));
+
+    const rows = [
+      { name: 'Vendor', value: webgl.vendor, analysis: '' },
+      { name: 'Renderer', value: webgl.renderer, analysis: '' },
+      { name: 'Unmasked Vendor', value: webgl.unmaskedVendor || 'N/A', analysis: isMobileGPU ? '📱 Mobile GPU' : '🖥️ Desktop GPU' },
+      { name: 'Unmasked Renderer', value: webgl.unmaskedRenderer || 'N/A', analysis: '' },
+      { name: 'Version', value: webgl.version, analysis: '' },
+      { name: 'Max Texture Size', value: webgl.maxTextureSize, analysis: webgl.maxTextureSize >= 16384 ? 'High-end' : 'Standard' },
+      { name: 'Extensions', value: webgl.extensions, analysis: '' },
+    ];
+
+    document.getElementById('webgl-body').innerHTML = rows.map(r => `
+        <tr>
+          <td><strong>${r.name}</strong></td>
+          <td class="value">${escapeHtml(String(r.value))}</td>
+          <td style="color: #8b949e">${r.analysis}</td>
+        </tr>
+      `).join('');
+  }
+
+  function renderFeaturePolicy(featurePolicy, platform) {
+    const isAndroid = platform.os === 'Android';
+
+    const features = [
+      { name: 'accelerometer', expected: true },
+      { name: 'gyroscope', expected: true },
+      { name: 'magnetometer', expected: true },
+      { name: 'bluetooth', expected: true },
+      { name: 'geolocation', expected: true },
+      { name: 'camera', expected: true },
+      { name: 'microphone', expected: true },
+      { name: 'usb', expected: false },
+      { name: 'serial', expected: false },
+      { name: 'hid', expected: false },
+      { name: 'local-fonts', expected: false },
+      { name: 'web-share', expected: true },
+      { name: 'screen-wake-lock', expected: true },
+    ];
+
+    document.getElementById('permissions-body').innerHTML = features.map(f => {
+      const value = featurePolicy[f.name];
+      const match = value === f.expected || value === 'error';
+      return `
+          <tr class="${match ? '' : 'warning'}">
+            <td><strong>${f.name}</strong></td>
+            <td class="value">${value === 'error' ? 'N/A' : (value ? '✓' : '✗')}</td>
+            <td>${f.expected ? 'Allowed' : 'Blocked'}</td>
+            <td><span class="status-${match ? 'match' : 'warning'}">${match ? '✓' : '⚠'}</span></td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  function renderAutomation(automation) {
+    const checks = [
+      { name: 'navigator.webdriver', value: automation.webdriver, suspicious: automation.webdriver === true },
+      { name: 'chrome.runtime', value: automation.chromeRuntime, suspicious: false },
+      { name: 'Prototype Tampering', value: automation.toStringTampered, suspicious: automation.toStringTampered },
+      { name: '__playwright', value: automation.__playwright, suspicious: automation.__playwright },
+      { name: '__puppeteer', value: automation.__puppeteer, suspicious: automation.__puppeteer },
+      { name: 'Plugins Inconsistent', value: automation.pluginsInconsistent, suspicious: automation.pluginsInconsistent },
+      { name: 'Languages Empty', value: automation.languagesInconsistent, suspicious: automation.languagesInconsistent },
+      { name: 'Outer Size Zero', value: automation.outerWidthZero || automation.outerHeightZero, suspicious: automation.outerWidthZero || automation.outerHeightZero },
+      { name: 'Visibility State', value: automation.documentVisibilityState, suspicious: automation.documentVisibilityState !== 'visible' },
+    ];
+
+    document.getElementById('automation-body').innerHTML = checks.map(c => `
+        <tr class="${c.suspicious ? 'mismatch' : ''}">
+          <td><strong>${c.name}</strong></td>
+          <td class="value">${escapeHtml(String(c.value))}</td>
+          <td><span class="status-${c.suspicious ? 'mismatch' : 'match'}">${c.suspicious ? '⚠️ Yes' : '✓ No'}</span></td>
+        </tr>
+      `).join('');
+  }
+
+  function renderMediaQueries(queries, platform) {
+    const isMobile = platform.type === 'mobile';
+
+    const expectations = {
+      'pointer: coarse': isMobile,
+      'pointer: fine': !isMobile,
+      'hover: none': isMobile,
+      'hover: hover': !isMobile,
+      'any-pointer: coarse': isMobile,
+    };
+
+    document.getElementById('media-body').innerHTML = Object.entries(queries).map(([query, result]) => {
+      const expected = expectations[query];
+      const hasExpectation = expected !== undefined;
+      const match = !hasExpectation || result === expected;
+
+      return `
+          <tr class="${match ? '' : 'mismatch'}">
+            <td><strong>${query}</strong></td>
+            <td class="value">${result ? 'true' : 'false'}</td>
+            <td>${hasExpectation ? String(expected) : '-'}</td>
+            <td><span class="status-${match ? 'match' : 'mismatch'}">${hasExpectation ? (match ? '✓' : '✗') : '-'}</span></td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  function renderTiming(timing) {
+    const rows = [
+      { name: 'UA Access (1000x)', value: timing.userAgentAccess?.toFixed(2), analysis: timing.userAgentAccess < 1 ? 'Normal' : 'Slow' },
+      { name: 'Canvas Fingerprint', value: timing.canvasFingerprint?.toFixed(2), analysis: timing.canvasFingerprint < 10 ? 'Normal' : 'Slow' },
+      { name: 'WebGL Init', value: timing.webglInit?.toFixed(2), analysis: timing.webglInit < 50 ? 'Normal' : 'Slow' },
+      { name: 'High Entropy Values', value: timing.highEntropyValues?.toFixed(2) || 'N/A', analysis: '' },
+    ];
+
+    document.getElementById('timing-body').innerHTML = rows.map(r => `
+        <tr>
+          <td><strong>${r.name}</strong></td>
+          <td class="value">${r.value} ms</td>
+          <td style="color: #8b949e">${r.analysis}</td>
+        </tr>
+      `).join('');
+  }
+
+  // ============== Main ==============
+  async function runAllTests() {
     document.getElementById('loading').style.display = 'block';
     document.getElementById('results').style.display = 'none';
 
     try {
       // Collect all data
-      const [httpHeaders, jsData, highEntropy] = await Promise.all([
+      const [httpHeaders, clientHints, hardware, timing] = await Promise.all([
         fetchHttpHeaders(),
-        collectJsData(),
-        collectHighEntropy()
+        getClientHints(),
+        getHardwareInfo(),
+        getTimingInfo()
       ]);
 
-      // Run comparison
-      const comparison = await runComparison(httpHeaders, jsData, highEntropy);
+      const mobile = getMobileIndicators();
+      const screen = getScreenInfo();
+      const plugins = getPluginsInfo();
+      const webgl = getWebGLInfo();
+      const featurePolicy = await getFeaturePolicyInfo();
+      const automation = getAutomationIndicators();
+      const mediaQueries = getMediaQueries();
 
-      // Generate alerts
-      const alerts = generateAlerts(comparison);
-
-      // Calculate score
-      const score = calculateScore(comparison);
-
-      // Store results
-      testResults = {
+      allResults = {
         timestamp: new Date().toISOString(),
         httpHeaders,
-        jsData,
-        highEntropy,
-        comparison,
-        alerts,
-        score
+        clientHints,
+        mobile,
+        screen,
+        hardware,
+        plugins,
+        webgl,
+        featurePolicy,
+        automation,
+        mediaQueries,
+        timing
       };
 
+      const platform = detectPlatform(allResults);
+      const alerts = analyzeConsistency(allResults);
+
+      allResults.platform = platform;
+      allResults.alerts = alerts;
+      allResults.score = calculateScore(allResults, alerts);
+
       // Render
-      renderSummary(score);
+      renderSummary(allResults, alerts);
       renderAlerts(alerts);
-      renderComparison(comparison);
-      renderHttpHeaders(httpHeaders);
-      renderJsData(jsData);
-      renderHighEntropy(highEntropy);
-      document.getElementById('raw-json').textContent = JSON.stringify(testResults, null, 2);
+      renderHttpJsComparison(httpHeaders, clientHints);
+      renderMobileIndicators(mobile, platform);
+      renderScreen(screen);
+      renderHardware(hardware, platform);
+      renderPlugins(plugins, platform);
+      renderWebGL(webgl);
+      renderFeaturePolicy(featurePolicy, platform);
+      renderAutomation(automation);
+      renderMediaQueries(mediaQueries, platform);
+      renderTiming(timing);
+
+      document.getElementById('raw-json').textContent = JSON.stringify(allResults, null, 2);
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('results').style.display = 'block';
@@ -931,21 +1257,28 @@
     } catch (error) {
       document.getElementById('loading').innerHTML = `
           <p style="color: #f85149;">❌ Error: ${escapeHtml(error.message)}</p>
-          <p style="color: #8b949e;">Try refreshing the page or check your network connection.</p>
-          <button onclick="runTest()">Retry</button>
+          <button onclick="runAllTests()">Retry</button>
         `;
     }
   }
 
-  // Copy results
   function copyResults() {
-    navigator.clipboard.writeText(JSON.stringify(testResults, null, 2))
-            .then(() => alert('Results copied to clipboard!'))
-            .catch(err => alert('Failed to copy: ' + err));
+    navigator.clipboard.writeText(JSON.stringify(allResults, null, 2))
+            .then(() => alert('Copied!'))
+            .catch(err => alert('Failed: ' + err));
   }
 
-  // Auto-run on load
-  window.addEventListener('DOMContentLoaded', runTest);
+  function downloadResults() {
+    const blob = new Blob([JSON.stringify(allResults, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `device-test-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  window.addEventListener('DOMContentLoaded', runAllTests);
 </script>
 </body>
 </html>
