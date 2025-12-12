@@ -394,19 +394,72 @@
       // Check BluetoothDevice
       info.globalBluetoothDevice = typeof BluetoothDevice !== 'undefined';
       if (typeof BluetoothDevice !== 'undefined') {
+        info.bluetoothDeviceName = BluetoothDevice.name;
+        info.bluetoothDeviceLength = BluetoothDevice.length;
         info.bluetoothDevicePrototype = Object.getOwnPropertyNames(BluetoothDevice.prototype);
       }
 
       // Check BluetoothRemoteGATTServer
       info.globalBluetoothRemoteGATTServer = typeof BluetoothRemoteGATTServer !== 'undefined';
+      if (typeof BluetoothRemoteGATTServer !== 'undefined') {
+        info.gattServerPrototype = Object.getOwnPropertyNames(BluetoothRemoteGATTServer.prototype);
+      }
 
       // Check BluetoothRemoteGATTService
       info.globalBluetoothRemoteGATTService = typeof BluetoothRemoteGATTService !== 'undefined';
+      if (typeof BluetoothRemoteGATTService !== 'undefined') {
+        info.gattServicePrototype = Object.getOwnPropertyNames(BluetoothRemoteGATTService.prototype);
+      }
 
       // Check BluetoothRemoteGATTCharacteristic
       info.globalBluetoothRemoteGATTCharacteristic = typeof BluetoothRemoteGATTCharacteristic !== 'undefined';
+      if (typeof BluetoothRemoteGATTCharacteristic !== 'undefined') {
+        info.gattCharacteristicPrototype = Object.getOwnPropertyNames(BluetoothRemoteGATTCharacteristic.prototype);
+      }
+
+      // Check BluetoothRemoteGATTDescriptor
+      info.globalBluetoothRemoteGATTDescriptor = typeof BluetoothRemoteGATTDescriptor !== 'undefined';
+      if (typeof BluetoothRemoteGATTDescriptor !== 'undefined') {
+        info.gattDescriptorPrototype = Object.getOwnPropertyNames(BluetoothRemoteGATTDescriptor.prototype);
+      }
+
+      // Check BluetoothCharacteristicProperties
+      info.globalBluetoothCharacteristicProperties = typeof BluetoothCharacteristicProperties !== 'undefined';
+      if (typeof BluetoothCharacteristicProperties !== 'undefined') {
+        info.characteristicPropertiesPrototype = Object.getOwnPropertyNames(BluetoothCharacteristicProperties.prototype);
+      }
+
+      // Check BluetoothUUID
+      info.globalBluetoothUUID = typeof BluetoothUUID !== 'undefined';
+      if (typeof BluetoothUUID !== 'undefined') {
+        info.bluetoothUUIDMethods = Object.getOwnPropertyNames(BluetoothUUID);
+      }
 
       return info;
+    });
+
+    // 8.1 Prototype chain analysis
+    data.bluetooth.prototypeChain = safeCall(() => {
+      const chain = [];
+      let current = navigator.bluetooth;
+      let depth = 0;
+      const maxDepth = 10;
+
+      while (current && depth < maxDepth) {
+        const proto = Object.getPrototypeOf(current);
+        if (!proto) break;
+
+        chain.push({
+          constructorName: proto.constructor?.name || 'unknown',
+          ownProps: Object.getOwnPropertyNames(proto),
+          toStringTag: proto[Symbol.toStringTag] || null
+        });
+
+        current = proto;
+        depth++;
+      }
+
+      return chain;
     });
 
     // 9. Feature Policy / Permissions Policy check
@@ -443,19 +496,40 @@
         lies.push({ type: 'toStringTag', expected: 'Bluetooth', got: toStringTag });
       }
 
-      // Check for unexpected enumerable properties
-      const enumerable = [];
-      for (let prop in navigator.bluetooth) {
-        enumerable.push(prop);
-      }
-      if (enumerable.length > 0) {
-        lies.push({ type: 'unexpectedEnumerable', props: enumerable });
+      // Check for unexpected OWN enumerable properties (not from prototype chain)
+      const ownEnumerable = Object.keys(navigator.bluetooth);
+      if (ownEnumerable.length > 0) {
+        lies.push({ type: 'unexpectedOwnEnumerable', props: ownEnumerable });
       }
 
-      // Check prototype chain
+      // Check prototype chain - should be Bluetooth -> EventTarget -> Object
       const proto = Object.getPrototypeOf(navigator.bluetooth);
       if (proto && proto.constructor.name !== 'Bluetooth') {
         lies.push({ type: 'prototypeChain', expected: 'Bluetooth', got: proto.constructor.name });
+      }
+
+      // Check that Bluetooth inherits from EventTarget
+      const proto2 = proto ? Object.getPrototypeOf(proto) : null;
+      if (proto2 && proto2.constructor.name !== 'EventTarget') {
+        lies.push({ type: 'prototypeChain2', expected: 'EventTarget', got: proto2.constructor.name });
+      }
+
+      // Check native code patterns
+      const getAvailStr = navigator.bluetooth.getAvailability?.toString() || '';
+      if (getAvailStr && !getAvailStr.includes('[native code]')) {
+        lies.push({ type: 'getAvailability_notNative', got: getAvailStr.substring(0, 100) });
+      }
+
+      const requestDevStr = navigator.bluetooth.requestDevice?.toString() || '';
+      if (requestDevStr && !requestDevStr.includes('[native code]')) {
+        lies.push({ type: 'requestDevice_notNative', got: requestDevStr.substring(0, 100) });
+      }
+
+      // Check Function.prototype.toString integrity
+      const fnToString = Function.prototype.toString;
+      const fnToStringStr = fnToString.call(fnToString);
+      if (!fnToStringStr.includes('[native code]')) {
+        lies.push({ type: 'Function.prototype.toString_tampered' });
       }
 
       return {
@@ -619,6 +693,38 @@
                             <span class="item-key">BluetoothRemoteGATTService</span>
                             <span class="item-value ${ctor.globalBluetoothRemoteGATTService}">${ctor.globalBluetoothRemoteGATTService}</span>
                         </div>
+                        <div class="item">
+                            <span class="item-key">BluetoothRemoteGATTCharacteristic</span>
+                            <span class="item-value ${ctor.globalBluetoothRemoteGATTCharacteristic}">${ctor.globalBluetoothRemoteGATTCharacteristic}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">BluetoothRemoteGATTDescriptor</span>
+                            <span class="item-value ${ctor.globalBluetoothRemoteGATTDescriptor}">${ctor.globalBluetoothRemoteGATTDescriptor}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">BluetoothCharacteristicProperties</span>
+                            <span class="item-value ${ctor.globalBluetoothCharacteristicProperties}">${ctor.globalBluetoothCharacteristicProperties}</span>
+                        </div>
+                        <div class="item">
+                            <span class="item-key">BluetoothUUID</span>
+                            <span class="item-value ${ctor.globalBluetoothUUID}">${ctor.globalBluetoothUUID}</span>
+                        </div>
+                    </div>
+                `;
+    }
+
+    // Prototype Chain
+    const chain = data.bluetooth.prototypeChain;
+    if (chain && chain.length > 0) {
+      html += `
+                    <div class="section">
+                        <div class="section-title">Prototype Chain</div>
+                        ${chain.map((level, i) => `
+                        <div class="item">
+                            <span class="item-key">${i}: ${level.constructorName}</span>
+                            <span class="item-value" style="font-size: 0.75rem">${level.ownProps.slice(0, 5).join(', ')}${level.ownProps.length > 5 ? '...' : ''}</span>
+                        </div>
+                        `).join('')}
                     </div>
                 `;
     }
@@ -658,12 +764,12 @@
                         <div class="section-title">Lie Detection</div>
                         <div class="item">
                             <span class="item-key">Lies Detected</span>
-                            <span class="item-value ${lieClass}">${lies.detected ? 'YES (' + lies.count + ')' : 'None'}</span>
+                            <span class="item-value ${lieClass}">${lies.detected ? 'YES (' + lies.count + ')' : 'None ✓'}</span>
                         </div>
                         ${lies.lies?.map(lie => `
                         <div class="item">
                             <span class="item-key">${lie.type}</span>
-                            <span class="item-value error">Expected: ${lie.expected}, Got: ${lie.got || lie.props?.join(', ')}</span>
+                            <span class="item-value error">${lie.expected ? `Expected: ${lie.expected}, Got: ${lie.got}` : (lie.props ? lie.props.join(', ') : lie.got || 'detected')}</span>
                         </div>
                         `).join('') || ''}
                     </div>
