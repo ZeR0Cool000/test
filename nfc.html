@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Browser Fingerprint Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            margin: 0;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #00d9ff;
+            font-size: 1.5em;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 20px;
+        }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .section-title {
+            color: #00d9ff;
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,217,255,0.3);
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9em;
+        }
+        .item:last-child {
+            border-bottom: none;
+        }
+        .item-key {
+            color: #aaa;
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+        .item-value {
+            color: #fff;
+            word-break: break-all;
+            text-align: right;
+        }
+        .item-value.true {
+            color: #4ade80;
+        }
+        .item-value.false {
+            color: #f87171;
+        }
+        .item-value.undefined {
+            color: #fbbf24;
+        }
+        .item-value.function {
+            color: #a78bfa;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #00d9ff, #0099cc);
+            color: #000;
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: #000;
+        }
+        .copied {
+            background: linear-gradient(135deg, #4ade80, #22c55e) !important;
+        }
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .method-item {
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+        .method-name {
+            color: #a78bfa;
+            font-family: monospace;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: 8px;
+        }
+        .status-supported {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+        .status-unsupported {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+        .array-value {
+            font-family: monospace;
+            font-size: 0.85em;
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4ade80;
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .warning {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            margin-bottom: 16px;
+        }
+        .info {
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            color: #00d9ff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔖 NFC Browser Fingerprint</h1>
+    <p class="subtitle">Web NFC API Detection Tool v1.0</p>
+
+    <div class="warning" id="httpsWarning" style="display:none;">
+        ⚠️ Web NFC requires HTTPS. Some features may not work on HTTP.
+    </div>
+
+    <div class="info" id="supportInfo"></div>
+
+    <button class="btn btn-success" id="copyBtn" onclick="copyToClipboard()">
+        📋 Copy All Data as JSON
+    </button>
+
+    <div class="section">
+        <div class="section-title">🔍 API Presence Detection</div>
+        <div id="apiPresence"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🔐 Permission Status</div>
+        <div id="permissionStatus"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📦 NDEFReader Analysis</div>
+        <div id="ndefReaderAnalysis"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📝 NDEFMessage Analysis</div>
+        <div id="ndefMessageAnalysis"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📄 NDEFRecord Analysis</div>
+        <div id="ndefRecordAnalysis"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🛡️ Feature Policy</div>
+        <div id="featurePolicy"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🔧 Constructor Details</div>
+        <div id="constructorDetails"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📊 Prototype Chain</div>
+        <div id="prototypeChain"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🧪 Instance Test (if supported)</div>
+        <div id="instanceTest"></div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="runPermissionTest()">
+        🔓 Request NFC Permission (User Gesture Required)
+    </button>
+
+    <div class="section">
+        <div class="section-title">📱 Device & Browser Info</div>
+        <div id="deviceInfo"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+    // Global data object for JSON export
+    const fingerprintData = {
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        apiPresence: {},
+        permission: {},
+        ndefReader: {},
+        ndefMessage: {},
+        ndefRecord: {},
+        featurePolicy: {},
+        constructors: {},
+        prototypeChain: {},
+        instanceTest: {},
+        deviceInfo: {}
+    };
+
+    // Helper functions
+    function getValueClass(value) {
+        if (value === true) return 'true';
+        if (value === false) return 'false';
+        if (value === undefined || value === 'undefined') return 'undefined';
+        if (typeof value === 'function' || (typeof value === 'string' && value.includes('function'))) return 'function';
+        return '';
+    }
+
+    function renderItem(key, value, container) {
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = `
+                <span class="item-key">${key}</span>
+                <span class="item-value ${getValueClass(value)}">${formatValue(value)}</span>
+            `;
+        container.appendChild(item);
+    }
+
+    function formatValue(value) {
+        if (value === undefined) return 'undefined';
+        if (value === null) return 'null';
+        if (typeof value === 'function') return 'ƒ ' + (value.name || 'anonymous') + '()';
+        if (typeof value === 'object') {
+            try {
+                return JSON.stringify(value);
+            } catch {
+                return String(value);
+            }
+        }
+        return String(value);
+    }
+
+    function safeCall(fn) {
+        try {
+            return fn();
+        } catch (e) {
+            return `Error: ${e.message}`;
+        }
+    }
+
+    function getPropertyDescriptor(obj, prop) {
+        if (!obj) return null;
+        const desc = Object.getOwnPropertyDescriptor(obj, prop);
+        if (desc) return desc;
+        const proto = Object.getPrototypeOf(obj);
+        if (proto) return getPropertyDescriptor(proto, prop);
+        return null;
+    }
+
+    function analyzePrototype(Constructor, name) {
+        const result = {
+            exists: typeof Constructor !== 'undefined',
+            constructorName: null,
+            prototypeProperties: [],
+            prototypeMethodNames: [],
+            ownPropertyNames: [],
+            symbols: []
+        };
+
+        if (!result.exists) return result;
+
+        try {
+            result.constructorName = Constructor.name;
+
+            if (Constructor.prototype) {
+                result.prototypeProperties = Object.getOwnPropertyNames(Constructor.prototype);
+                result.prototypeMethodNames = result.prototypeProperties.filter(p => {
+                    try {
+                        return typeof Constructor.prototype[p] === 'function';
+                    } catch {
+                        return false;
+                    }
+                });
+
+                // Get symbols
+                result.symbols = Object.getOwnPropertySymbols(Constructor.prototype).map(s => s.toString());
+            }
+
+            result.ownPropertyNames = Object.getOwnPropertyNames(Constructor);
+        } catch (e) {
+            result.error = e.message;
+        }
+
+        return result;
+    }
+
+    // Main analysis functions
+    function analyzeAPIPresence() {
+        const container = document.getElementById('apiPresence');
+        const checks = {
+            'NDEFReader in window': 'NDEFReader' in window,
+            'NDEFMessage in window': 'NDEFMessage' in window,
+            'NDEFRecord in window': 'NDEFRecord' in window,
+            'NDEFReadingEvent in window': 'NDEFReadingEvent' in window,
+            'typeof NDEFReader': typeof window.NDEFReader,
+            'typeof NDEFMessage': typeof window.NDEFMessage,
+            'typeof NDEFRecord': typeof window.NDEFRecord,
+            'typeof NDEFReadingEvent': typeof window.NDEFReadingEvent,
+            'window.NDEFReader?.toString()': safeCall(() => window.NDEFReader?.toString()),
+            'navigator.nfc (legacy)': 'nfc' in navigator,
+        };
+
+        fingerprintData.apiPresence = checks;
+        Object.entries(checks).forEach(([k, v]) => renderItem(k, v, container));
+
+        // Update support info
+        const supported = 'NDEFReader' in window;
+        document.getElementById('supportInfo').innerHTML = supported
+            ? '✅ Web NFC API is supported in this browser!'
+            : '❌ Web NFC API is NOT supported. This is typical for non-Chromium browsers or desktop/iOS devices.';
+    }
+
+    async function analyzePermission() {
+        const container = document.getElementById('permissionStatus');
+        const permData = {
+            'permissions.query supported': 'permissions' in navigator && 'query' in navigator.permissions,
+        };
+
+        if (navigator.permissions && navigator.permissions.query) {
+            try {
+                const status = await navigator.permissions.query({ name: 'nfc' });
+                permData['nfc permission state'] = status.state;
+                permData['nfc permission name'] = status.name;
+                permData['nfc permission onchange type'] = typeof status.onchange;
+
+                // Listen for changes
+                status.onchange = () => {
+                    permData['nfc permission state (updated)'] = status.state;
+                    fingerprintData.permission = permData;
+                };
+            } catch (e) {
+                permData['nfc permission query error'] = e.message;
+                permData['nfc permission query error name'] = e.name;
+            }
+        }
+
+        fingerprintData.permission = permData;
+        Object.entries(permData).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    function analyzeNDEFReader() {
+        const container = document.getElementById('ndefReaderAnalysis');
+        const data = {};
+
+        if (typeof NDEFReader === 'undefined') {
+            data['status'] = 'NDEFReader not available';
+            fingerprintData.ndefReader = data;
+            renderItem('status', 'NDEFReader not available', container);
+            return;
+        }
+
+        // Static analysis
+        data['NDEFReader.name'] = NDEFReader.name;
+        data['NDEFReader.length'] = NDEFReader.length;
+        data['NDEFReader.toString()'] = NDEFReader.toString();
+
+        // Prototype methods
+        const proto = NDEFReader.prototype;
+        data['prototype methods'] = Object.getOwnPropertyNames(proto);
+
+        const methodChecks = ['scan', 'write', 'makeReadOnly'];
+        methodChecks.forEach(method => {
+            data[`prototype.${method} exists`] = method in proto;
+            data[`prototype.${method} type`] = typeof proto[method];
+            if (typeof proto[method] === 'function') {
+                data[`prototype.${method}.length`] = proto[method].length;
+                data[`prototype.${method}.name`] = proto[method].name;
+            }
+        });
+
+        // Event handlers
+        const eventHandlers = ['onreading', 'onreadingerror'];
+        eventHandlers.forEach(handler => {
+            const desc = Object.getOwnPropertyDescriptor(proto, handler);
+            data[`${handler} descriptor exists`] = !!desc;
+            if (desc) {
+                data[`${handler} get`] = typeof desc.get;
+                data[`${handler} set`] = typeof desc.set;
+                data[`${handler} enumerable`] = desc.enumerable;
+                data[`${handler} configurable`] = desc.configurable;
+            }
+        });
+
+        // Inheritance
+        data['inherits from EventTarget'] = safeCall(() => NDEFReader.prototype instanceof EventTarget);
+        data['prototype constructor'] = proto.constructor.name;
+        data['prototype [[Prototype]]'] = Object.getPrototypeOf(proto)?.constructor?.name;
+
+        fingerprintData.ndefReader = data;
+        Object.entries(data).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    function analyzeNDEFMessage() {
+        const container = document.getElementById('ndefMessageAnalysis');
+        const data = {};
+
+        if (typeof NDEFMessage === 'undefined') {
+            data['status'] = 'NDEFMessage not available';
+            fingerprintData.ndefMessage = data;
+            renderItem('status', 'NDEFMessage not available', container);
+            return;
+        }
+
+        data['NDEFMessage.name'] = NDEFMessage.name;
+        data['NDEFMessage.length'] = NDEFMessage.length;
+        data['NDEFMessage.toString()'] = NDEFMessage.toString();
+
+        const proto = NDEFMessage.prototype;
+        data['prototype properties'] = Object.getOwnPropertyNames(proto);
+
+        // Records property
+        const recordsDesc = Object.getOwnPropertyDescriptor(proto, 'records');
+        data['records descriptor exists'] = !!recordsDesc;
+        if (recordsDesc) {
+            data['records get'] = typeof recordsDesc.get;
+            data['records set'] = typeof recordsDesc.set;
+            data['records enumerable'] = recordsDesc.enumerable;
+            data['records configurable'] = recordsDesc.configurable;
+        }
+
+        data['prototype constructor'] = proto.constructor.name;
+
+        fingerprintData.ndefMessage = data;
+        Object.entries(data).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    function analyzeNDEFRecord() {
+        const container = document.getElementById('ndefRecordAnalysis');
+        const data = {};
+
+        if (typeof NDEFRecord === 'undefined') {
+            data['status'] = 'NDEFRecord not available';
+            fingerprintData.ndefRecord = data;
+            renderItem('status', 'NDEFRecord not available', container);
+            return;
+        }
+
+        data['NDEFRecord.name'] = NDEFRecord.name;
+        data['NDEFRecord.length'] = NDEFRecord.length;
+        data['NDEFRecord.toString()'] = NDEFRecord.toString();
+
+        const proto = NDEFRecord.prototype;
+        data['prototype properties'] = Object.getOwnPropertyNames(proto);
+
+        // Analyze each property
+        const properties = ['recordType', 'mediaType', 'id', 'data', 'encoding', 'lang'];
+        properties.forEach(prop => {
+            const desc = Object.getOwnPropertyDescriptor(proto, prop);
+            data[`${prop} descriptor exists`] = !!desc;
+            if (desc) {
+                data[`${prop} get type`] = typeof desc.get;
+                data[`${prop} enumerable`] = desc.enumerable;
+                data[`${prop} configurable`] = desc.configurable;
+            }
+        });
+
+        // toRecords method
+        data['toRecords exists'] = 'toRecords' in proto;
+        data['toRecords type'] = typeof proto.toRecords;
+        if (typeof proto.toRecords === 'function') {
+            data['toRecords.length'] = proto.toRecords.length;
+        }
+
+        data['prototype constructor'] = proto.constructor.name;
+
+        fingerprintData.ndefRecord = data;
+        Object.entries(data).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    function analyzeFeaturePolicy() {
+        const container = document.getElementById('featurePolicy');
+        const data = {};
+
+        // Check document.featurePolicy (older) and document.permissionsPolicy (newer)
+        data['document.featurePolicy exists'] = 'featurePolicy' in document;
+        data['document.permissionsPolicy exists'] = 'permissionsPolicy' in document;
+
+        const policy = document.featurePolicy || document.permissionsPolicy;
+
+        if (policy) {
+            data['policy object type'] = policy.constructor.name;
+
+            // Try to check NFC feature
+            if (typeof policy.allowsFeature === 'function') {
+                try {
+                    data['allowsFeature("nfc")'] = policy.allowsFeature('nfc');
+                } catch (e) {
+                    data['allowsFeature("nfc") error'] = e.message;
+                }
+            }
+
+            if (typeof policy.features === 'function') {
+                try {
+                    const features = policy.features();
+                    data['features() includes nfc'] = features.includes('nfc');
+                    data['total features count'] = features.length;
+                } catch (e) {
+                    data['features() error'] = e.message;
+                }
+            }
+
+            if (typeof policy.allowedFeatures === 'function') {
+                try {
+                    const allowed = policy.allowedFeatures();
+                    data['allowedFeatures() includes nfc'] = allowed.includes('nfc');
+                } catch (e) {
+                    data['allowedFeatures() error'] = e.message;
+                }
+            }
+        } else {
+            data['Feature Policy API'] = 'not available';
+        }
+
+        // Check Permissions-Policy header effect
+        data['isSecureContext'] = window.isSecureContext;
+
+        fingerprintData.featurePolicy = data;
+        Object.entries(data).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    function analyzeConstructors() {
+        const container = document.getElementById('constructorDetails');
+        const data = {};
+
+        const constructors = ['NDEFReader', 'NDEFMessage', 'NDEFRecord', 'NDEFReadingEvent'];
+
+        constructors.forEach(name => {
+            const Constructor = window[name];
+            if (typeof Constructor !== 'undefined') {
+                data[`${name} exists`] = true;
+                data[`${name}.name`] = Constructor.name;
+                data[`${name}.length`] = Constructor.length;
+                data[`${name}.prototype exists`] = !!Constructor.prototype;
+                data[`${name}.prototype.constructor === ${name}`] = Constructor.prototype?.constructor === Constructor;
+
+                // Check if it's a native function
+                const fnStr = Constructor.toString();
+                data[`${name} is native`] = fnStr.includes('[native code]');
+
+                // Symbol.toStringTag
+                if (Constructor.prototype) {
+                    const tag = Constructor.prototype[Symbol.toStringTag];
+                    data[`${name} Symbol.toStringTag`] = tag;
+                }
+            } else {
+                data[`${name} exists`] = false;
+            }
+        });
+
+        fingerprintData.constructors = data;
+        Object.entries(data).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    function analyzePrototypeChain() {
+        const container = document.getElementById('prototypeChain');
+        const data = {};
+
+        if (typeof NDEFReader !== 'undefined') {
+            // Build prototype chain
+            const chain = [];
+            let proto = NDEFReader.prototype;
+            while (proto) {
+                chain.push(proto.constructor?.name || 'Object');
+                proto = Object.getPrototypeOf(proto);
+            }
+            data['NDEFReader chain'] = chain.join(' → ');
+
+            // Check specific inheritance
+            data['NDEFReader extends EventTarget'] = safeCall(() => {
+                return Object.getPrototypeOf(NDEFReader.prototype) === EventTarget.prototype;
+            });
+        }
+
+        if (typeof NDEFMessage !== 'undefined') {
+            const chain = [];
+            let proto = NDEFMessage.prototype;
+            while (proto) {
+                chain.push(proto.constructor?.name || 'Object');
+                proto = Object.getPrototypeOf(proto);
+            }
+            data['NDEFMessage chain'] = chain.join(' → ');
+        }
+
+        if (typeof NDEFRecord !== 'undefined') {
+            const chain = [];
+            let proto = NDEFRecord.prototype;
+            while (proto) {
+                chain.push(proto.constructor?.name || 'Object');
+                proto = Object.getPrototypeOf(proto);
+            }
+            data['NDEFRecord chain'] = chain.join(' → ');
+        }
+
+        fingerprintData.prototypeChain = data;
+        Object.entries(data).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    function analyzeInstance() {
+        const container = document.getElementById('instanceTest');
+        const data = {};
+
+        if (typeof NDEFReader === 'undefined') {
+            data['status'] = 'Cannot create instance - NDEFReader not available';
+            fingerprintData.instanceTest = data;
+            renderItem('status', data.status, container);
+            return;
+        }
+
+        try {
+            const reader = new NDEFReader();
+            data['instance created'] = true;
+            data['instance constructor.name'] = reader.constructor.name;
+            data['instance instanceof NDEFReader'] = reader instanceof NDEFReader;
+            data['instance instanceof EventTarget'] = reader instanceof EventTarget;
+
+            // Check instance properties
+            data['instance own properties'] = Object.getOwnPropertyNames(reader);
+            data['instance has onreading'] = 'onreading' in reader;
+            data['instance has onreadingerror'] = 'onreadingerror' in reader;
+            data['instance onreading value'] = reader.onreading;
+            data['instance onreadingerror value'] = reader.onreadingerror;
+
+            // Check methods
+            data['instance scan type'] = typeof reader.scan;
+            data['instance write type'] = typeof reader.write;
+            data['instance makeReadOnly type'] = typeof reader.makeReadOnly;
+
+            // EventTarget methods
+            data['instance addEventListener type'] = typeof reader.addEventListener;
+            data['instance removeEventListener type'] = typeof reader.removeEventListener;
+            data['instance dispatchEvent type'] = typeof reader.dispatchEvent;
+
+            // String representation
+            data['instance.toString()'] = reader.toString();
+            data['Object.prototype.toString.call(instance)'] = Object.prototype.toString.call(reader);
+
+        } catch (e) {
+            data['instance creation error'] = e.message;
+            data['instance creation error name'] = e.name;
+        }
+
+        fingerprintData.instanceTest = data;
+        Object.entries(data).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    function analyzeDeviceInfo() {
+        const container = document.getElementById('deviceInfo');
+        const data = {
+            'userAgent': navigator.userAgent,
+            'platform': navigator.platform,
+            'vendor': navigator.vendor,
+            'isSecureContext': window.isSecureContext,
+            'protocol': window.location.protocol,
+            'maxTouchPoints': navigator.maxTouchPoints,
+            'deviceMemory': navigator.deviceMemory,
+            'hardwareConcurrency': navigator.hardwareConcurrency,
+        };
+
+        // Check for Android
+        data['isAndroid'] = /Android/i.test(navigator.userAgent);
+        data['isChrome'] = /Chrome/i.test(navigator.userAgent) && !/Edge|Edg/i.test(navigator.userAgent);
+        data['isMobile'] = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+        // Chrome version if applicable
+        const chromeMatch = navigator.userAgent.match(/Chrome\/(\d+)/);
+        data['chromeVersion'] = chromeMatch ? parseInt(chromeMatch[1]) : null;
+        data['nfcMinChromeVersion'] = 89;
+        data['chromeVersionSupportsNFC'] = chromeMatch ? parseInt(chromeMatch[1]) >= 89 : false;
+
+        fingerprintData.deviceInfo = data;
+        Object.entries(data).forEach(([k, v]) => renderItem(k, v, container));
+    }
+
+    async function runPermissionTest() {
+        if (typeof NDEFReader === 'undefined') {
+            showToast('NDEFReader not supported in this browser');
+            return;
+        }
+
+        try {
+            const reader = new NDEFReader();
+            await reader.scan();
+            showToast('NFC permission granted! Scanning...');
+
+            reader.onreading = (event) => {
+                fingerprintData.lastReadEvent = {
+                    serialNumber: event.serialNumber,
+                    recordsCount: event.message.records.length,
+                    timestamp: new Date().toISOString()
+                };
+                showToast(`Tag read! Serial: ${event.serialNumber}`);
+            };
+
+            reader.onreadingerror = () => {
+                showToast('Error reading NFC tag');
+            };
+        } catch (e) {
+            showToast(`Permission error: ${e.message}`);
+            fingerprintData.permissionTestError = {
+                message: e.message,
+                name: e.name
+            };
+        }
+    }
+
+    function copyToClipboard() {
+        const json = JSON.stringify(fingerprintData, null, 2);
+        navigator.clipboard.writeText(json).then(() => {
+            showToast('Copied to clipboard!');
+            const btn = document.getElementById('copyBtn');
+            btn.classList.add('copied');
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.textContent = '📋 Copy All Data as JSON';
+            }, 2000);
+        }).catch(err => {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = json;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('Copied to clipboard!');
+        });
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Check HTTPS
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        document.getElementById('httpsWarning').style.display = 'block';
+    }
+
+    // Run all analyses
+    async function init() {
+        analyzeAPIPresence();
+        await analyzePermission();
+        analyzeNDEFReader();
+        analyzeNDEFMessage();
+        analyzeNDEFRecord();
+        analyzeFeaturePolicy();
+        analyzeConstructors();
+        analyzePrototypeChain();
+        analyzeInstance();
+        analyzeDeviceInfo();
+    }
+
+    init();
+</script>
+</body>
+</html>
