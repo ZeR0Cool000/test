@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Battery API Fingerprint Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 16px;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #00d4ff;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .status-supported {
+            background: #00c853;
+            color: #000;
+        }
+
+        .status-unsupported {
+            background: #ff5252;
+            color: #fff;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 14px;
+            color: #00d4ff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #00d4ff;
+            border-radius: 2px;
+        }
+
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .param-row:last-child {
+            border-bottom: none;
+        }
+
+        .param-name {
+            font-size: 13px;
+            color: #a0a0a0;
+        }
+
+        .param-value {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+            color: #fff;
+            text-align: right;
+            word-break: break-all;
+            max-width: 60%;
+        }
+
+        .param-value.boolean-true {
+            color: #00c853;
+        }
+
+        .param-value.boolean-false {
+            color: #ff5252;
+        }
+
+        .param-value.number {
+            color: #ffab00;
+        }
+
+        .param-value.infinity {
+            color: #7c4dff;
+        }
+
+        .battery-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 12px;
+        }
+
+        .battery-icon {
+            width: 80px;
+            height: 36px;
+            border: 3px solid #fff;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .battery-icon::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 16px;
+            background: #fff;
+            border-radius: 0 3px 3px 0;
+        }
+
+        .battery-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00c853, #69f0ae);
+            transition: width 0.3s ease;
+        }
+
+        .battery-fill.low {
+            background: linear-gradient(90deg, #ff5252, #ff8a80);
+        }
+
+        .battery-fill.charging {
+            background: linear-gradient(90deg, #00d4ff, #69f0ae);
+        }
+
+        .battery-percent {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .charging-indicator {
+            color: #00d4ff;
+            font-size: 24px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #00a0cc);
+            color: #000;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .events-log {
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .event-item {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .event-time {
+            color: #00d4ff;
+        }
+
+        .event-name {
+            color: #ffab00;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00c853;
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .meta-info {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .json-preview {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #69f0ae;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .json-preview.show {
+            display: block;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔋 Battery API Fingerprint</h1>
+
+    <div style="text-align: center;">
+        <span id="apiStatus" class="status-badge status-unsupported">Checking...</span>
+    </div>
+
+    <div id="batteryVisual" class="battery-visual" style="display: none;">
+        <div class="battery-icon">
+            <div id="batteryFill" class="battery-fill" style="width: 0%"></div>
+        </div>
+        <span id="chargingIndicator" class="charging-indicator" style="display: none;">⚡</span>
+        <span id="batteryPercent" class="battery-percent">--%</span>
+    </div>
+
+    <!-- API Support -->
+    <div class="card">
+        <div class="card-title">API Support Check</div>
+        <div class="param-row">
+            <span class="param-name">navigator.getBattery</span>
+            <span id="hasGetBattery" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">BatteryManager in window</span>
+            <span id="hasBatteryManager" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Secure Context</span>
+            <span id="isSecureContext" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Protocol</span>
+            <span id="protocol" class="param-value">--</span>
+        </div>
+    </div>
+
+    <!-- Core Properties -->
+    <div class="card" id="corePropsCard" style="display: none;">
+        <div class="card-title">Core Properties</div>
+        <div class="param-row">
+            <span class="param-name">charging</span>
+            <span id="charging" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">level</span>
+            <span id="level" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">level (raw)</span>
+            <span id="levelRaw" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">chargingTime</span>
+            <span id="chargingTime" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">dischargingTime</span>
+            <span id="dischargingTime" class="param-value">--</span>
+        </div>
+    </div>
+
+    <!-- Computed Values -->
+    <div class="card" id="computedCard" style="display: none;">
+        <div class="card-title">Computed / Fingerprint Values</div>
+        <div class="param-row">
+            <span class="param-name">Level Precision</span>
+            <span id="levelPrecision" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">chargingTime (minutes)</span>
+            <span id="chargingTimeMin" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">dischargingTime (minutes)</span>
+            <span id="dischargingTimeMin" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Est. Full Capacity (mAh)</span>
+            <span id="estimatedCapacity" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Fingerprint Hash</span>
+            <span id="fingerprintHash" class="param-value">--</span>
+        </div>
+    </div>
+
+    <!-- Object Properties -->
+    <div class="card" id="objectPropsCard" style="display: none;">
+        <div class="card-title">BatteryManager Object Info</div>
+        <div class="param-row">
+            <span class="param-name">Constructor Name</span>
+            <span id="constructorName" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Prototype Chain</span>
+            <span id="prototypeChain" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Own Properties</span>
+            <span id="ownProps" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">toString()</span>
+            <span id="toStringResult" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Symbol.toStringTag</span>
+            <span id="toStringTag" class="param-value">--</span>
+        </div>
+    </div>
+
+    <!-- Event Handlers -->
+    <div class="card" id="eventHandlersCard" style="display: none;">
+        <div class="card-title">Event Handlers Presence</div>
+        <div class="param-row">
+            <span class="param-name">onchargingchange</span>
+            <span id="onchargingchange" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">onchargingtimechange</span>
+            <span id="onchargingtimechange" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">ondischargingtimechange</span>
+            <span id="ondischargingtimechange" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">onlevelchange</span>
+            <span id="onlevelchange" class="param-value">--</span>
+        </div>
+    </div>
+
+    <!-- Events Log -->
+    <div class="card" id="eventsCard" style="display: none;">
+        <div class="card-title">Live Events Log</div>
+        <div id="eventsLog" class="events-log">
+            <div style="color: #666;">Waiting for battery events...</div>
+        </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- Buttons -->
+    <button id="copyBtn" class="btn btn-primary" onclick="copyToClipboard()">
+        📋 Copy JSON to Clipboard
+    </button>
+    <button class="btn btn-secondary" onclick="toggleJsonPreview()">
+        👁️ Toggle JSON Preview
+    </button>
+    <button class="btn btn-secondary" onclick="refreshData()">
+        🔄 Refresh Data
+    </button>
+
+    <div id="jsonPreview" class="json-preview"></div>
+
+    <div class="meta-info">
+        <div>Timestamp: <span id="timestamp">--</span></div>
+        <div>User Agent: <span id="userAgent">--</span></div>
+    </div>
+</div>
+
+<div id="toast" class="toast">Copied to clipboard!</div>
+
+<script>
+    let batteryData = {
+        _meta: {
+            timestamp: null,
+            userAgent: navigator.userAgent,
+            url: location.href,
+            isSecureContext: window.isSecureContext,
+            protocol: location.protocol
+        },
+        apiSupport: {
+            hasGetBattery: false,
+            hasBatteryManager: false,
+            getBatteryType: null,
+            batteryManagerType: null
+        },
+        batteryManager: null,
+        properties: {
+            charging: null,
+            chargingTime: null,
+            dischargingTime: null,
+            level: null
+        },
+        computed: {
+            levelPercent: null,
+            levelPrecisionDecimals: null,
+            chargingTimeMinutes: null,
+            dischargingTimeMinutes: null,
+            estimatedCapacityMah: null,
+            fingerprintHash: null
+        },
+        objectInfo: {
+            constructorName: null,
+            prototypeChain: [],
+            ownPropertyNames: [],
+            toString: null,
+            toStringTag: null
+        },
+        eventHandlers: {
+            onchargingchange: null,
+            onchargingtimechange: null,
+            ondischargingtimechange: null,
+            onlevelchange: null
+        },
+        events: []
+    };
+
+    let battery = null;
+
+    // Initialize
+    async function init() {
+        updateTimestamp();
+        checkApiSupport();
+
+        if (batteryData.apiSupport.hasGetBattery) {
+            try {
+                battery = await navigator.getBattery();
+                updateBatteryData(battery);
+                setupEventListeners(battery);
+                showBatteryCards();
+                document.getElementById('apiStatus').textContent = 'API Supported ✓';
+                document.getElementById('apiStatus').className = 'status-badge status-supported';
+            } catch (error) {
+                batteryData.error = {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack
+                };
+                document.getElementById('apiStatus').textContent = 'API Error: ' + error.message;
+                document.getElementById('apiStatus').className = 'status-badge status-unsupported';
+            }
+        } else {
+            document.getElementById('apiStatus').textContent = 'API Not Supported';
+            document.getElementById('apiStatus').className = 'status-badge status-unsupported';
+        }
+
+        updateJsonPreview();
+    }
+
+    function updateTimestamp() {
+        const now = new Date();
+        batteryData._meta.timestamp = now.toISOString();
+        document.getElementById('timestamp').textContent = now.toLocaleString();
+        document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 50) + '...';
+    }
+
+    function checkApiSupport() {
+        // Check getBattery
+        batteryData.apiSupport.hasGetBattery = 'getBattery' in navigator;
+        batteryData.apiSupport.getBatteryType = typeof navigator.getBattery;
+
+        // Check BatteryManager
+        batteryData.apiSupport.hasBatteryManager = 'BatteryManager' in window;
+        batteryData.apiSupport.batteryManagerType = typeof window.BatteryManager;
+
+        // Update UI
+        updateValue('hasGetBattery', batteryData.apiSupport.hasGetBattery, 'boolean');
+        updateValue('hasBatteryManager', batteryData.apiSupport.hasBatteryManager, 'boolean');
+        updateValue('isSecureContext', window.isSecureContext, 'boolean');
+        document.getElementById('protocol').textContent = location.protocol;
+    }
+
+    function updateBatteryData(battery) {
+        // Core properties
+        batteryData.properties.charging = battery.charging;
+        batteryData.properties.chargingTime = battery.chargingTime;
+        batteryData.properties.dischargingTime = battery.dischargingTime;
+        batteryData.properties.level = battery.level;
+
+        // Update UI - Core
+        updateValue('charging', battery.charging, 'boolean');
+        updateValue('level', (battery.level * 100).toFixed(2) + '%', 'number');
+        updateValue('levelRaw', battery.level, 'number');
+        updateValue('chargingTime', formatTime(battery.chargingTime),
+            battery.chargingTime === Infinity ? 'infinity' : 'number');
+        updateValue('dischargingTime', formatTime(battery.dischargingTime),
+            battery.dischargingTime === Infinity ? 'infinity' : 'number');
+
+        // Computed values
+        batteryData.computed.levelPercent = battery.level * 100;
+        batteryData.computed.levelPrecisionDecimals = getPrecision(battery.level);
+        batteryData.computed.chargingTimeMinutes = battery.chargingTime === Infinity ?
+            Infinity : Math.round(battery.chargingTime / 60);
+        batteryData.computed.dischargingTimeMinutes = battery.dischargingTime === Infinity ?
+            Infinity : Math.round(battery.dischargingTime / 60);
+
+        // Estimate capacity (rough approximation)
+        if (battery.dischargingTime !== Infinity && battery.level > 0) {
+            // Assuming average drain of 200mA for typical phone usage
+            const avgDrainMa = 200;
+            const hoursRemaining = battery.dischargingTime / 3600;
+            const remainingMah = avgDrainMa * hoursRemaining;
+            batteryData.computed.estimatedCapacityMah = Math.round(remainingMah / battery.level);
+        }
+
+        // Generate fingerprint hash
+        batteryData.computed.fingerprintHash = generateFingerprintHash(battery);
+
+        // Update UI - Computed
+        updateValue('levelPrecision', batteryData.computed.levelPrecisionDecimals + ' decimals', 'number');
+        updateValue('chargingTimeMin', batteryData.computed.chargingTimeMinutes + ' min',
+            battery.chargingTime === Infinity ? 'infinity' : 'number');
+        updateValue('dischargingTimeMin', batteryData.computed.dischargingTimeMinutes + ' min',
+            battery.dischargingTime === Infinity ? 'infinity' : 'number');
+        updateValue('estimatedCapacity', batteryData.computed.estimatedCapacityMah || 'N/A', 'number');
+        updateValue('fingerprintHash', batteryData.computed.fingerprintHash.substring(0, 16) + '...', 'number');
+
+        // Object info
+        batteryData.objectInfo.constructorName = battery.constructor.name;
+        batteryData.objectInfo.prototypeChain = getPrototypeChain(battery);
+        batteryData.objectInfo.ownPropertyNames = Object.getOwnPropertyNames(battery);
+        batteryData.objectInfo.toString = battery.toString();
+        batteryData.objectInfo.toStringTag = battery[Symbol.toStringTag];
+
+        // Update UI - Object info
+        document.getElementById('constructorName').textContent = batteryData.objectInfo.constructorName;
+        document.getElementById('prototypeChain').textContent = batteryData.objectInfo.prototypeChain.join(' → ');
+        document.getElementById('ownProps').textContent = batteryData.objectInfo.ownPropertyNames.length > 0 ?
+            batteryData.objectInfo.ownPropertyNames.join(', ') : '(none)';
+        document.getElementById('toStringResult').textContent = batteryData.objectInfo.toString;
+        document.getElementById('toStringTag').textContent = batteryData.objectInfo.toStringTag || 'undefined';
+
+        // Event handlers
+        batteryData.eventHandlers.onchargingchange = 'onchargingchange' in battery;
+        batteryData.eventHandlers.onchargingtimechange = 'onchargingtimechange' in battery;
+        batteryData.eventHandlers.ondischargingtimechange = 'ondischargingtimechange' in battery;
+        batteryData.eventHandlers.onlevelchange = 'onlevelchange' in battery;
+
+        // Update UI - Event handlers
+        updateValue('onchargingchange', batteryData.eventHandlers.onchargingchange, 'boolean');
+        updateValue('onchargingtimechange', batteryData.eventHandlers.onchargingtimechange, 'boolean');
+        updateValue('ondischargingtimechange', batteryData.eventHandlers.ondischargingtimechange, 'boolean');
+        updateValue('onlevelchange', batteryData.eventHandlers.onlevelchange, 'boolean');
+
+        // Update battery visual
+        updateBatteryVisual(battery);
+
+        // Update JSON preview
+        updateJsonPreview();
+    }
+
+    function setupEventListeners(battery) {
+        const events = ['chargingchange', 'chargingtimechange', 'dischargingtimechange', 'levelchange'];
+
+        events.forEach(eventName => {
+            battery.addEventListener(eventName, (event) => {
+                const eventData = {
+                    type: eventName,
+                    timestamp: new Date().toISOString(),
+                    charging: battery.charging,
+                    chargingTime: battery.chargingTime,
+                    dischargingTime: battery.dischargingTime,
+                    level: battery.level
+                };
+
+                batteryData.events.push(eventData);
+
+                // Keep only last 50 events
+                if (batteryData.events.length > 50) {
+                    batteryData.events.shift();
+                }
+
+                logEvent(eventData);
+                updateBatteryData(battery);
+            });
+        });
+    }
+
+    function logEvent(eventData) {
+        const logEl = document.getElementById('eventsLog');
+        const time = new Date(eventData.timestamp).toLocaleTimeString();
+
+        const eventHtml = `<div class="event-item">
+                <span class="event-time">[${time}]</span>
+                <span class="event-name">${eventData.type}</span>
+                → level: ${(eventData.level * 100).toFixed(1)}%, charging: ${eventData.charging}
+            </div>`;
+
+        if (logEl.querySelector('div[style]')) {
+            logEl.innerHTML = '';
+        }
+
+        logEl.insertAdjacentHTML('afterbegin', eventHtml);
+    }
+
+    function updateBatteryVisual(battery) {
+        document.getElementById('batteryVisual').style.display = 'flex';
+
+        const fillEl = document.getElementById('batteryFill');
+        const percent = battery.level * 100;
+        fillEl.style.width = percent + '%';
+
+        fillEl.classList.remove('low', 'charging');
+        if (battery.charging) {
+            fillEl.classList.add('charging');
+        } else if (percent <= 20) {
+            fillEl.classList.add('low');
+        }
+
+        document.getElementById('batteryPercent').textContent = percent.toFixed(0) + '%';
+        document.getElementById('chargingIndicator').style.display = battery.charging ? 'inline' : 'none';
+    }
+
+    function showBatteryCards() {
+        document.getElementById('corePropsCard').style.display = 'block';
+        document.getElementById('computedCard').style.display = 'block';
+        document.getElementById('objectPropsCard').style.display = 'block';
+        document.getElementById('eventHandlersCard').style.display = 'block';
+        document.getElementById('eventsCard').style.display = 'block';
+    }
+
+    function updateValue(elementId, value, type) {
+        const el = document.getElementById(elementId);
+        el.textContent = String(value);
+
+        el.className = 'param-value';
+        if (type === 'boolean') {
+            el.classList.add(value ? 'boolean-true' : 'boolean-false');
+        } else if (type === 'number') {
+            el.classList.add('number');
+        } else if (type === 'infinity') {
+            el.classList.add('infinity');
+        }
+    }
+
+    function formatTime(seconds) {
+        if (seconds === Infinity) return 'Infinity';
+        if (seconds === 0) return '0';
+
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m ${secs}s (${seconds}s)`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${secs}s (${seconds}s)`;
+        } else {
+            return `${secs}s`;
+        }
+    }
+
+    function getPrecision(num) {
+        const str = num.toString();
+        if (str.indexOf('.') === -1) return 0;
+        return str.split('.')[1].length;
+    }
+
+    function getPrototypeChain(obj) {
+        const chain = [];
+        let proto = Object.getPrototypeOf(obj);
+        while (proto) {
+            chain.push(proto.constructor.name);
+            proto = Object.getPrototypeOf(proto);
+        }
+        return chain;
+    }
+
+    function generateFingerprintHash(battery) {
+        const data = [
+            battery.charging,
+            battery.level,
+            battery.chargingTime,
+            battery.dischargingTime
+        ].join('|');
+
+        // Simple hash for fingerprint
+        let hash = 0;
+        for (let i = 0; i < data.length; i++) {
+            const char = data.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(16).padStart(8, '0');
+    }
+
+    function getExportData() {
+        return {
+            ...batteryData,
+            _exportedAt: new Date().toISOString()
+        };
+    }
+
+    function updateJsonPreview() {
+        const preview = document.getElementById('jsonPreview');
+        preview.textContent = JSON.stringify(getExportData(), null, 2);
+    }
+
+    function toggleJsonPreview() {
+        const preview = document.getElementById('jsonPreview');
+        preview.classList.toggle('show');
+    }
+
+    async function copyToClipboard() {
+        const data = JSON.stringify(getExportData(), null, 2);
+
+        try {
+            await navigator.clipboard.writeText(data);
+            showToast('Copied to clipboard!');
+        } catch (err) {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = data;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast('Copied to clipboard!');
+            } catch (e) {
+                showToast('Copy failed!');
+            }
+
+            document.body.removeChild(textarea);
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+
+    async function refreshData() {
+        if (battery) {
+            updateBatteryData(battery);
+            showToast('Data refreshed!');
+        } else {
+            await init();
+        }
+    }
+
+    // Start
+    init();
+</script>
+</body>
+</html>
