@@ -10,7 +10,7 @@
             margin: 0;
             padding: 0;
         }
-
+        
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -18,26 +18,26 @@
             min-height: 100vh;
             padding: 16px;
         }
-
+        
         .container {
             max-width: 800px;
             margin: 0 auto;
         }
-
+        
         h1 {
             text-align: center;
             color: #00d4ff;
             margin-bottom: 8px;
             font-size: 1.5rem;
         }
-
+        
         .subtitle {
             text-align: center;
             color: #888;
             margin-bottom: 20px;
             font-size: 0.85rem;
         }
-
+        
         .section {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
@@ -45,7 +45,7 @@
             margin-bottom: 16px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
+        
         .section-title {
             color: #00d4ff;
             font-size: 1rem;
@@ -54,7 +54,7 @@
             align-items: center;
             gap: 8px;
         }
-
+        
         .section-title::before {
             content: '';
             width: 4px;
@@ -62,12 +62,12 @@
             background: #00d4ff;
             border-radius: 2px;
         }
-
+        
         .property-grid {
             display: grid;
             gap: 8px;
         }
-
+        
         .property-row {
             display: flex;
             justify-content: space-between;
@@ -78,13 +78,13 @@
             flex-wrap: wrap;
             gap: 8px;
         }
-
+        
         .property-name {
             color: #aaa;
             font-size: 0.85rem;
             font-family: 'Monaco', 'Consolas', monospace;
         }
-
+        
         .property-value {
             color: #4ade80;
             font-family: 'Monaco', 'Consolas', monospace;
@@ -93,23 +93,23 @@
             text-align: right;
             max-width: 60%;
         }
-
+        
         .property-value.undefined {
             color: #f87171;
         }
-
+        
         .property-value.boolean-true {
             color: #4ade80;
         }
-
+        
         .property-value.boolean-false {
             color: #fbbf24;
         }
-
+        
         .property-value.number {
             color: #60a5fa;
         }
-
+        
         .btn {
             display: flex;
             align-items: center;
@@ -125,22 +125,22 @@
             transition: all 0.2s;
             margin-top: 8px;
         }
-
+        
         .btn-primary {
             background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
             color: #000;
         }
-
+        
         .btn-primary:active {
             transform: scale(0.98);
         }
-
+        
         .btn-secondary {
             background: rgba(255, 255, 255, 0.1);
             color: #e0e0e0;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-
+        
         .status {
             text-align: center;
             padding: 12px;
@@ -148,17 +148,17 @@
             margin-top: 12px;
             font-size: 0.9rem;
         }
-
+        
         .status.success {
             background: rgba(74, 222, 128, 0.2);
             color: #4ade80;
         }
-
+        
         .status.info {
             background: rgba(96, 165, 250, 0.2);
             color: #60a5fa;
         }
-
+        
         .json-preview {
             background: #0d1117;
             border-radius: 8px;
@@ -173,14 +173,14 @@
             white-space: pre-wrap;
             word-break: break-all;
         }
-
+        
         .timestamp {
             text-align: center;
             color: #666;
             font-size: 0.75rem;
             margin-top: 16px;
         }
-
+        
         .support-badge {
             display: inline-block;
             padding: 2px 8px;
@@ -188,23 +188,23 @@
             font-size: 0.7rem;
             margin-left: 8px;
         }
-
+        
         .support-badge.supported {
             background: rgba(74, 222, 128, 0.2);
             color: #4ade80;
         }
-
+        
         .support-badge.unsupported {
             background: rgba(248, 113, 113, 0.2);
             color: #f87171;
         }
-
+        
         .change-log {
             max-height: 150px;
             overflow-y: auto;
             margin-top: 8px;
         }
-
+        
         .change-entry {
             padding: 6px 10px;
             background: rgba(0, 0, 0, 0.3);
@@ -213,7 +213,7 @@
             font-size: 0.75rem;
             font-family: monospace;
         }
-
+        
         .worker-status {
             display: flex;
             align-items: center;
@@ -223,18 +223,18 @@
             border-radius: 8px;
             margin-top: 8px;
         }
-
+        
         .status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
         }
-
+        
         .status-dot.online {
             background: #4ade80;
             box-shadow: 0 0 8px #4ade80;
         }
-
+        
         .status-dot.offline {
             background: #f87171;
             box-shadow: 0 0 8px #f87171;
@@ -242,569 +242,569 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>🔌 Connection Type Fingerprint</h1>
-    <p class="subtitle">Сбор данных Network Information API для Android</p>
-
-    <!-- API Support -->
-    <div class="section">
-        <div class="section-title">
-            API Support
-            <span id="apiSupportBadge" class="support-badge"></span>
-        </div>
-        <div class="property-grid">
-            <div class="property-row">
-                <span class="property-name">navigator.connection</span>
-                <span id="connectionSupport" class="property-value"></span>
+    <div class="container">
+        <h1>🔌 Connection Type Fingerprint</h1>
+        <p class="subtitle">Сбор данных Network Information API для Android</p>
+        
+        <!-- API Support -->
+        <div class="section">
+            <div class="section-title">
+                API Support
+                <span id="apiSupportBadge" class="support-badge"></span>
             </div>
-            <div class="property-row">
-                <span class="property-name">navigator.onLine</span>
-                <span id="onLineSupport" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">WorkerNavigator.connection</span>
-                <span id="workerSupport" class="property-value"></span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Online Status -->
-    <div class="section">
-        <div class="section-title">Online Status</div>
-        <div class="property-grid">
-            <div class="property-row">
-                <span class="property-name">navigator.onLine</span>
-                <span id="onLineValue" class="property-value"></span>
+            <div class="property-grid">
+                <div class="property-row">
+                    <span class="property-name">navigator.connection</span>
+                    <span id="connectionSupport" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">navigator.onLine</span>
+                    <span id="onLineSupport" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">WorkerNavigator.connection</span>
+                    <span id="workerSupport" class="property-value"></span>
+                </div>
             </div>
         </div>
-        <div class="worker-status">
-            <div id="statusDot" class="status-dot"></div>
-            <span id="statusText" style="font-size: 0.85rem;"></span>
-        </div>
-    </div>
-
-    <!-- NetworkInformation Properties -->
-    <div class="section">
-        <div class="section-title">NetworkInformation Properties</div>
-        <div class="property-grid">
-            <div class="property-row">
-                <span class="property-name">type</span>
-                <span id="connType" class="property-value"></span>
+        
+        <!-- Online Status -->
+        <div class="section">
+            <div class="section-title">Online Status</div>
+            <div class="property-grid">
+                <div class="property-row">
+                    <span class="property-name">navigator.onLine</span>
+                    <span id="onLineValue" class="property-value"></span>
+                </div>
             </div>
-            <div class="property-row">
-                <span class="property-name">effectiveType</span>
-                <span id="effectiveType" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">downlink</span>
-                <span id="downlink" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">downlinkMax</span>
-                <span id="downlinkMax" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">rtt</span>
-                <span id="rtt" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">saveData</span>
-                <span id="saveData" class="property-value"></span>
+            <div class="worker-status">
+                <div id="statusDot" class="status-dot"></div>
+                <span id="statusText" style="font-size: 0.85rem;"></span>
             </div>
         </div>
-    </div>
-
-    <!-- Prototype Analysis -->
-    <div class="section">
-        <div class="section-title">Prototype Analysis (Anti-Detection)</div>
-        <div class="property-grid">
-            <div class="property-row">
-                <span class="property-name">constructor.name</span>
-                <span id="constructorName" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">Symbol.toStringTag</span>
-                <span id="toStringTag" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">toString()</span>
-                <span id="toStringResult" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">prototype chain valid</span>
-                <span id="prototypeValid" class="property-value"></span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">own property descriptors</span>
-                <span id="descriptorsValid" class="property-value"></span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Property Descriptors -->
-    <div class="section">
-        <div class="section-title">Property Descriptors</div>
-        <div id="descriptorsList" class="property-grid"></div>
-    </div>
-
-    <!-- Connection Change Events -->
-    <div class="section">
-        <div class="section-title">Connection Change Log</div>
-        <div id="changeLog" class="change-log">
-            <div class="change-entry" style="color: #888;">Ожидание изменений подключения...</div>
-        </div>
-    </div>
-
-    <!-- HTTP Client Hints Info -->
-    <div class="section">
-        <div class="section-title">HTTP Client Hints (Network)</div>
-        <div class="property-grid">
-            <div class="property-row">
-                <span class="property-name">Downlink</span>
-                <span class="property-value" style="color: #888;">= navigator.connection.downlink</span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">ECT</span>
-                <span class="property-value" style="color: #888;">= navigator.connection.effectiveType</span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">RTT</span>
-                <span class="property-value" style="color: #888;">= navigator.connection.rtt</span>
-            </div>
-            <div class="property-row">
-                <span class="property-name">Save-Data</span>
-                <span class="property-value" style="color: #888;">= navigator.connection.saveData</span>
+        
+        <!-- NetworkInformation Properties -->
+        <div class="section">
+            <div class="section-title">NetworkInformation Properties</div>
+            <div class="property-grid">
+                <div class="property-row">
+                    <span class="property-name">type</span>
+                    <span id="connType" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">effectiveType</span>
+                    <span id="effectiveType" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">downlink</span>
+                    <span id="downlink" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">downlinkMax</span>
+                    <span id="downlinkMax" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">rtt</span>
+                    <span id="rtt" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">saveData</span>
+                    <span id="saveData" class="property-value"></span>
+                </div>
             </div>
         </div>
-        <p style="margin-top: 12px; font-size: 0.75rem; color: #666;">
-            * HTTP Client Hints отправляются в заголовках запросов, если сервер запросил их через Accept-CH
-        </p>
+        
+        <!-- Prototype Analysis -->
+        <div class="section">
+            <div class="section-title">Prototype Analysis (Anti-Detection)</div>
+            <div class="property-grid">
+                <div class="property-row">
+                    <span class="property-name">constructor.name</span>
+                    <span id="constructorName" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">Symbol.toStringTag</span>
+                    <span id="toStringTag" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">toString()</span>
+                    <span id="toStringResult" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">prototype chain valid</span>
+                    <span id="prototypeValid" class="property-value"></span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">own property descriptors</span>
+                    <span id="descriptorsValid" class="property-value"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Property Descriptors -->
+        <div class="section">
+            <div class="section-title">Property Descriptors</div>
+            <div id="descriptorsList" class="property-grid"></div>
+        </div>
+        
+        <!-- Connection Change Events -->
+        <div class="section">
+            <div class="section-title">Connection Change Log</div>
+            <div id="changeLog" class="change-log">
+                <div class="change-entry" style="color: #888;">Ожидание изменений подключения...</div>
+            </div>
+        </div>
+        
+        <!-- HTTP Client Hints Info -->
+        <div class="section">
+            <div class="section-title">HTTP Client Hints (Network)</div>
+            <div class="property-grid">
+                <div class="property-row">
+                    <span class="property-name">Downlink</span>
+                    <span class="property-value" style="color: #888;">= navigator.connection.downlink</span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">ECT</span>
+                    <span class="property-value" style="color: #888;">= navigator.connection.effectiveType</span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">RTT</span>
+                    <span class="property-value" style="color: #888;">= navigator.connection.rtt</span>
+                </div>
+                <div class="property-row">
+                    <span class="property-name">Save-Data</span>
+                    <span class="property-value" style="color: #888;">= navigator.connection.saveData</span>
+                </div>
+            </div>
+            <p style="margin-top: 12px; font-size: 0.75rem; color: #666;">
+                * HTTP Client Hints отправляются в заголовках запросов, если сервер запросил их через Accept-CH
+            </p>
+        </div>
+        
+        <!-- Buttons -->
+        <button class="btn btn-secondary" onclick="refreshData()">
+            🔄 Обновить данные
+        </button>
+        
+        <button class="btn btn-primary" onclick="copyToClipboard()">
+            📋 Копировать JSON
+        </button>
+        
+        <div id="copyStatus" class="status" style="display: none;"></div>
+        
+        <!-- JSON Preview -->
+        <div class="section" style="margin-top: 16px;">
+            <div class="section-title">JSON Preview</div>
+            <div id="jsonPreview" class="json-preview"></div>
+        </div>
+        
+        <p class="timestamp" id="timestamp"></p>
     </div>
-
-    <!-- Buttons -->
-    <button class="btn btn-secondary" onclick="refreshData()">
-        🔄 Обновить данные
-    </button>
-
-    <button class="btn btn-primary" onclick="copyToClipboard()">
-        📋 Копировать JSON
-    </button>
-
-    <div id="copyStatus" class="status" style="display: none;"></div>
-
-    <!-- JSON Preview -->
-    <div class="section" style="margin-top: 16px;">
-        <div class="section-title">JSON Preview</div>
-        <div id="jsonPreview" class="json-preview"></div>
-    </div>
-
-    <p class="timestamp" id="timestamp"></p>
-</div>
-
-<script>
-    let connectionData = {};
-    let changeLog = [];
-
-    function formatValue(value, el) {
-        if (value === undefined) {
-            el.classList.add('undefined');
-            return 'undefined';
-        }
-        if (value === null) {
-            el.classList.add('undefined');
-            return 'null';
-        }
-        if (typeof value === 'boolean') {
-            el.classList.add(value ? 'boolean-true' : 'boolean-false');
+    
+    <script>
+        let connectionData = {};
+        let changeLog = [];
+        
+        function formatValue(value, el) {
+            if (value === undefined) {
+                el.classList.add('undefined');
+                return 'undefined';
+            }
+            if (value === null) {
+                el.classList.add('undefined');
+                return 'null';
+            }
+            if (typeof value === 'boolean') {
+                el.classList.add(value ? 'boolean-true' : 'boolean-false');
+                return String(value);
+            }
+            if (typeof value === 'number') {
+                el.classList.add('number');
+                return String(value);
+            }
             return String(value);
         }
-        if (typeof value === 'number') {
-            el.classList.add('number');
-            return String(value);
-        }
-        return String(value);
-    }
-
-    function safeGet(obj, prop) {
-        try {
-            return obj[prop];
-        } catch (e) {
-            return `Error: ${e.message}`;
-        }
-    }
-
-    function getPropertyDescriptor(obj, prop) {
-        try {
-            const desc = Object.getOwnPropertyDescriptor(obj, prop);
-            if (!desc) {
-                // Check prototype
-                const proto = Object.getPrototypeOf(obj);
-                if (proto) {
-                    return Object.getOwnPropertyDescriptor(proto, prop);
-                }
-            }
-            return desc;
-        } catch (e) {
-            return null;
-        }
-    }
-
-    function analyzePrototype(connection) {
-        const analysis = {
-            constructorName: 'N/A',
-            toStringTag: 'N/A',
-            toStringResult: 'N/A',
-            prototypeChainValid: false,
-            hasCorrectDescriptors: false
-        };
-
-        if (!connection) return analysis;
-
-        try {
-            analysis.constructorName = connection.constructor?.name || 'N/A';
-        } catch (e) {
-            analysis.constructorName = `Error: ${e.message}`;
-        }
-
-        try {
-            analysis.toStringTag = connection[Symbol.toStringTag] || 'N/A';
-        } catch (e) {
-            analysis.toStringTag = `Error: ${e.message}`;
-        }
-
-        try {
-            analysis.toStringResult = Object.prototype.toString.call(connection);
-        } catch (e) {
-            analysis.toStringResult = `Error: ${e.message}`;
-        }
-
-        try {
-            // Check prototype chain
-            const proto = Object.getPrototypeOf(connection);
-            analysis.prototypeChainValid = proto &&
-                proto.constructor &&
-                proto.constructor.name === 'NetworkInformation' &&
-                Object.getPrototypeOf(proto)?.constructor?.name === 'EventTarget';
-        } catch (e) {
-            analysis.prototypeChainValid = false;
-        }
-
-        try {
-            // Check property descriptors are correct (getters on prototype)
-            const proto = Object.getPrototypeOf(connection);
-            const props = ['type', 'effectiveType', 'downlink', 'rtt', 'saveData'];
-            let validCount = 0;
-
-            for (const prop of props) {
-                const desc = Object.getOwnPropertyDescriptor(proto, prop);
-                if (desc && typeof desc.get === 'function' && !desc.set) {
-                    validCount++;
-                }
-            }
-
-            analysis.hasCorrectDescriptors = validCount >= 3; // At least 3 should be valid
-        } catch (e) {
-            analysis.hasCorrectDescriptors = false;
-        }
-
-        return analysis;
-    }
-
-    function getDescriptorsInfo(connection) {
-        const info = [];
-        const props = ['type', 'effectiveType', 'downlink', 'downlinkMax', 'rtt', 'saveData', 'onchange'];
-
-        if (!connection) return info;
-
-        const proto = Object.getPrototypeOf(connection);
-
-        for (const prop of props) {
+        
+        function safeGet(obj, prop) {
             try {
-                const desc = Object.getOwnPropertyDescriptor(proto, prop);
-                if (desc) {
+                return obj[prop];
+            } catch (e) {
+                return `Error: ${e.message}`;
+            }
+        }
+        
+        function getPropertyDescriptor(obj, prop) {
+            try {
+                const desc = Object.getOwnPropertyDescriptor(obj, prop);
+                if (!desc) {
+                    // Check prototype
+                    const proto = Object.getPrototypeOf(obj);
+                    if (proto) {
+                        return Object.getOwnPropertyDescriptor(proto, prop);
+                    }
+                }
+                return desc;
+            } catch (e) {
+                return null;
+            }
+        }
+        
+        function analyzePrototype(connection) {
+            const analysis = {
+                constructorName: 'N/A',
+                toStringTag: 'N/A',
+                toStringResult: 'N/A',
+                prototypeChainValid: false,
+                hasCorrectDescriptors: false
+            };
+            
+            if (!connection) return analysis;
+            
+            try {
+                analysis.constructorName = connection.constructor?.name || 'N/A';
+            } catch (e) {
+                analysis.constructorName = `Error: ${e.message}`;
+            }
+            
+            try {
+                analysis.toStringTag = connection[Symbol.toStringTag] || 'N/A';
+            } catch (e) {
+                analysis.toStringTag = `Error: ${e.message}`;
+            }
+            
+            try {
+                analysis.toStringResult = Object.prototype.toString.call(connection);
+            } catch (e) {
+                analysis.toStringResult = `Error: ${e.message}`;
+            }
+            
+            try {
+                // Check prototype chain
+                const proto = Object.getPrototypeOf(connection);
+                analysis.prototypeChainValid = proto && 
+                    proto.constructor && 
+                    proto.constructor.name === 'NetworkInformation' &&
+                    Object.getPrototypeOf(proto)?.constructor?.name === 'EventTarget';
+            } catch (e) {
+                analysis.prototypeChainValid = false;
+            }
+            
+            try {
+                // Check property descriptors are correct (getters on prototype)
+                const proto = Object.getPrototypeOf(connection);
+                const props = ['type', 'effectiveType', 'downlink', 'rtt', 'saveData'];
+                let validCount = 0;
+                
+                for (const prop of props) {
+                    const desc = Object.getOwnPropertyDescriptor(proto, prop);
+                    if (desc && typeof desc.get === 'function' && !desc.set) {
+                        validCount++;
+                    }
+                }
+                
+                analysis.hasCorrectDescriptors = validCount >= 3; // At least 3 should be valid
+            } catch (e) {
+                analysis.hasCorrectDescriptors = false;
+            }
+            
+            return analysis;
+        }
+        
+        function getDescriptorsInfo(connection) {
+            const info = [];
+            const props = ['type', 'effectiveType', 'downlink', 'downlinkMax', 'rtt', 'saveData', 'onchange'];
+            
+            if (!connection) return info;
+            
+            const proto = Object.getPrototypeOf(connection);
+            
+            for (const prop of props) {
+                try {
+                    const desc = Object.getOwnPropertyDescriptor(proto, prop);
+                    if (desc) {
+                        info.push({
+                            property: prop,
+                            hasGetter: typeof desc.get === 'function',
+                            hasSetter: typeof desc.set === 'function',
+                            enumerable: desc.enumerable,
+                            configurable: desc.configurable
+                        });
+                    } else {
+                        info.push({
+                            property: prop,
+                            hasGetter: false,
+                            hasSetter: false,
+                            enumerable: 'N/A',
+                            configurable: 'N/A',
+                            note: 'not on prototype'
+                        });
+                    }
+                } catch (e) {
                     info.push({
                         property: prop,
-                        hasGetter: typeof desc.get === 'function',
-                        hasSetter: typeof desc.set === 'function',
-                        enumerable: desc.enumerable,
-                        configurable: desc.configurable
-                    });
-                } else {
-                    info.push({
-                        property: prop,
-                        hasGetter: false,
-                        hasSetter: false,
-                        enumerable: 'N/A',
-                        configurable: 'N/A',
-                        note: 'not on prototype'
+                        error: e.message
                     });
                 }
-            } catch (e) {
-                info.push({
-                    property: prop,
-                    error: e.message
+            }
+            
+            return info;
+        }
+        
+        function collectData() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            
+            connectionData = {
+                _metadata: {
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    vendor: navigator.vendor
+                },
+                
+                apiSupport: {
+                    'navigator.connection': !!navigator.connection,
+                    'navigator.mozConnection': !!navigator.mozConnection,
+                    'navigator.webkitConnection': !!navigator.webkitConnection,
+                    'navigator.onLine': 'onLine' in navigator,
+                    'WorkerNavigator.connection': typeof Worker !== 'undefined'
+                },
+                
+                onLine: navigator.onLine,
+                
+                networkInformation: connection ? {
+                    type: safeGet(connection, 'type'),
+                    effectiveType: safeGet(connection, 'effectiveType'),
+                    downlink: safeGet(connection, 'downlink'),
+                    downlinkMax: safeGet(connection, 'downlinkMax'),
+                    rtt: safeGet(connection, 'rtt'),
+                    saveData: safeGet(connection, 'saveData')
+                } : null,
+                
+                prototypeAnalysis: analyzePrototype(connection),
+                
+                propertyDescriptors: getDescriptorsInfo(connection),
+                
+                httpClientHints: {
+                    note: 'These values correspond to HTTP Client Hints headers',
+                    Downlink: connection ? safeGet(connection, 'downlink') : null,
+                    ECT: connection ? safeGet(connection, 'effectiveType') : null,
+                    RTT: connection ? safeGet(connection, 'rtt') : null,
+                    'Save-Data': connection ? safeGet(connection, 'saveData') : null
+                },
+                
+                changeLog: changeLog.slice(-10) // Last 10 changes
+            };
+            
+            return connectionData;
+        }
+        
+        function updateUI() {
+            const data = collectData();
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            
+            // API Support
+            const apiSupported = !!connection;
+            document.getElementById('apiSupportBadge').textContent = apiSupported ? 'Supported' : 'Not Supported';
+            document.getElementById('apiSupportBadge').className = `support-badge ${apiSupported ? 'supported' : 'unsupported'}`;
+            
+            const connSupportEl = document.getElementById('connectionSupport');
+            connSupportEl.textContent = formatValue(!!navigator.connection, connSupportEl);
+            
+            const onLineSupportEl = document.getElementById('onLineSupport');
+            onLineSupportEl.textContent = formatValue('onLine' in navigator, onLineSupportEl);
+            
+            const workerSupportEl = document.getElementById('workerSupport');
+            const workerSupport = typeof Worker !== 'undefined';
+            workerSupportEl.textContent = formatValue(workerSupport, workerSupportEl);
+            
+            // Online status
+            const onLineEl = document.getElementById('onLineValue');
+            onLineEl.textContent = formatValue(navigator.onLine, onLineEl);
+            
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            statusDot.className = `status-dot ${navigator.onLine ? 'online' : 'offline'}`;
+            statusText.textContent = navigator.onLine ? 'Online' : 'Offline';
+            
+            // NetworkInformation properties
+            if (connection) {
+                const typeEl = document.getElementById('connType');
+                typeEl.textContent = formatValue(safeGet(connection, 'type'), typeEl);
+                
+                const effectiveTypeEl = document.getElementById('effectiveType');
+                effectiveTypeEl.textContent = formatValue(safeGet(connection, 'effectiveType'), effectiveTypeEl);
+                
+                const downlinkEl = document.getElementById('downlink');
+                const downlinkVal = safeGet(connection, 'downlink');
+                downlinkEl.textContent = formatValue(downlinkVal !== undefined ? `${downlinkVal} Mbps` : undefined, downlinkEl);
+                
+                const downlinkMaxEl = document.getElementById('downlinkMax');
+                const downlinkMaxVal = safeGet(connection, 'downlinkMax');
+                downlinkMaxEl.textContent = formatValue(downlinkMaxVal !== undefined ? `${downlinkMaxVal} Mbps` : undefined, downlinkMaxEl);
+                
+                const rttEl = document.getElementById('rtt');
+                const rttVal = safeGet(connection, 'rtt');
+                rttEl.textContent = formatValue(rttVal !== undefined ? `${rttVal} ms` : undefined, rttEl);
+                
+                const saveDataEl = document.getElementById('saveData');
+                saveDataEl.textContent = formatValue(safeGet(connection, 'saveData'), saveDataEl);
+            } else {
+                ['connType', 'effectiveType', 'downlink', 'downlinkMax', 'rtt', 'saveData'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.textContent = 'API not supported';
+                    el.classList.add('undefined');
                 });
             }
-        }
-
-        return info;
-    }
-
-    function collectData() {
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-
-        connectionData = {
-            _metadata: {
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                vendor: navigator.vendor
-            },
-
-            apiSupport: {
-                'navigator.connection': !!navigator.connection,
-                'navigator.mozConnection': !!navigator.mozConnection,
-                'navigator.webkitConnection': !!navigator.webkitConnection,
-                'navigator.onLine': 'onLine' in navigator,
-                'WorkerNavigator.connection': typeof Worker !== 'undefined' && 'connection' in WorkerNavigator.prototype
-            },
-
-            onLine: navigator.onLine,
-
-            networkInformation: connection ? {
-                type: safeGet(connection, 'type'),
-                effectiveType: safeGet(connection, 'effectiveType'),
-                downlink: safeGet(connection, 'downlink'),
-                downlinkMax: safeGet(connection, 'downlinkMax'),
-                rtt: safeGet(connection, 'rtt'),
-                saveData: safeGet(connection, 'saveData')
-            } : null,
-
-            prototypeAnalysis: analyzePrototype(connection),
-
-            propertyDescriptors: getDescriptorsInfo(connection),
-
-            httpClientHints: {
-                note: 'These values correspond to HTTP Client Hints headers',
-                Downlink: connection ? safeGet(connection, 'downlink') : null,
-                ECT: connection ? safeGet(connection, 'effectiveType') : null,
-                RTT: connection ? safeGet(connection, 'rtt') : null,
-                'Save-Data': connection ? safeGet(connection, 'saveData') : null
-            },
-
-            changeLog: changeLog.slice(-10) // Last 10 changes
-        };
-
-        return connectionData;
-    }
-
-    function updateUI() {
-        const data = collectData();
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-
-        // API Support
-        const apiSupported = !!connection;
-        document.getElementById('apiSupportBadge').textContent = apiSupported ? 'Supported' : 'Not Supported';
-        document.getElementById('apiSupportBadge').className = `support-badge ${apiSupported ? 'supported' : 'unsupported'}`;
-
-        const connSupportEl = document.getElementById('connectionSupport');
-        connSupportEl.textContent = formatValue(!!navigator.connection, connSupportEl);
-
-        const onLineSupportEl = document.getElementById('onLineSupport');
-        onLineSupportEl.textContent = formatValue('onLine' in navigator, onLineSupportEl);
-
-        const workerSupportEl = document.getElementById('workerSupport');
-        const workerSupport = typeof Worker !== 'undefined' && 'connection' in WorkerNavigator.prototype;
-        workerSupportEl.textContent = formatValue(workerSupport, workerSupportEl);
-
-        // Online status
-        const onLineEl = document.getElementById('onLineValue');
-        onLineEl.textContent = formatValue(navigator.onLine, onLineEl);
-
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        statusDot.className = `status-dot ${navigator.onLine ? 'online' : 'offline'}`;
-        statusText.textContent = navigator.onLine ? 'Online' : 'Offline';
-
-        // NetworkInformation properties
-        if (connection) {
-            const typeEl = document.getElementById('connType');
-            typeEl.textContent = formatValue(safeGet(connection, 'type'), typeEl);
-
-            const effectiveTypeEl = document.getElementById('effectiveType');
-            effectiveTypeEl.textContent = formatValue(safeGet(connection, 'effectiveType'), effectiveTypeEl);
-
-            const downlinkEl = document.getElementById('downlink');
-            const downlinkVal = safeGet(connection, 'downlink');
-            downlinkEl.textContent = formatValue(downlinkVal !== undefined ? `${downlinkVal} Mbps` : undefined, downlinkEl);
-
-            const downlinkMaxEl = document.getElementById('downlinkMax');
-            const downlinkMaxVal = safeGet(connection, 'downlinkMax');
-            downlinkMaxEl.textContent = formatValue(downlinkMaxVal !== undefined ? `${downlinkMaxVal} Mbps` : undefined, downlinkMaxEl);
-
-            const rttEl = document.getElementById('rtt');
-            const rttVal = safeGet(connection, 'rtt');
-            rttEl.textContent = formatValue(rttVal !== undefined ? `${rttVal} ms` : undefined, rttEl);
-
-            const saveDataEl = document.getElementById('saveData');
-            saveDataEl.textContent = formatValue(safeGet(connection, 'saveData'), saveDataEl);
-        } else {
-            ['connType', 'effectiveType', 'downlink', 'downlinkMax', 'rtt', 'saveData'].forEach(id => {
-                const el = document.getElementById(id);
-                el.textContent = 'API not supported';
-                el.classList.add('undefined');
-            });
-        }
-
-        // Prototype analysis
-        const analysis = data.prototypeAnalysis;
-
-        const constructorEl = document.getElementById('constructorName');
-        constructorEl.textContent = formatValue(analysis.constructorName, constructorEl);
-
-        const tagEl = document.getElementById('toStringTag');
-        tagEl.textContent = formatValue(analysis.toStringTag, tagEl);
-
-        const toStringEl = document.getElementById('toStringResult');
-        toStringEl.textContent = formatValue(analysis.toStringResult, toStringEl);
-
-        const protoEl = document.getElementById('prototypeValid');
-        protoEl.textContent = formatValue(analysis.prototypeChainValid, protoEl);
-
-        const descEl = document.getElementById('descriptorsValid');
-        descEl.textContent = formatValue(analysis.hasCorrectDescriptors, descEl);
-
-        // Property descriptors
-        const descList = document.getElementById('descriptorsList');
-        descList.innerHTML = '';
-
-        data.propertyDescriptors.forEach(desc => {
-            const row = document.createElement('div');
-            row.className = 'property-row';
-
-            let valueText = '';
-            if (desc.error) {
-                valueText = `Error: ${desc.error}`;
-            } else if (desc.note) {
-                valueText = desc.note;
-            } else {
-                valueText = `get: ${desc.hasGetter}, set: ${desc.hasSetter}, enum: ${desc.enumerable}`;
-            }
-
-            row.innerHTML = `
+            
+            // Prototype analysis
+            const analysis = data.prototypeAnalysis;
+            
+            const constructorEl = document.getElementById('constructorName');
+            constructorEl.textContent = formatValue(analysis.constructorName, constructorEl);
+            
+            const tagEl = document.getElementById('toStringTag');
+            tagEl.textContent = formatValue(analysis.toStringTag, tagEl);
+            
+            const toStringEl = document.getElementById('toStringResult');
+            toStringEl.textContent = formatValue(analysis.toStringResult, toStringEl);
+            
+            const protoEl = document.getElementById('prototypeValid');
+            protoEl.textContent = formatValue(analysis.prototypeChainValid, protoEl);
+            
+            const descEl = document.getElementById('descriptorsValid');
+            descEl.textContent = formatValue(analysis.hasCorrectDescriptors, descEl);
+            
+            // Property descriptors
+            const descList = document.getElementById('descriptorsList');
+            descList.innerHTML = '';
+            
+            data.propertyDescriptors.forEach(desc => {
+                const row = document.createElement('div');
+                row.className = 'property-row';
+                
+                let valueText = '';
+                if (desc.error) {
+                    valueText = `Error: ${desc.error}`;
+                } else if (desc.note) {
+                    valueText = desc.note;
+                } else {
+                    valueText = `get: ${desc.hasGetter}, set: ${desc.hasSetter}, enum: ${desc.enumerable}`;
+                }
+                
+                row.innerHTML = `
                     <span class="property-name">${desc.property}</span>
                     <span class="property-value" style="font-size: 0.75rem;">${valueText}</span>
                 `;
-            descList.appendChild(row);
-        });
-
-        // JSON preview
-        document.getElementById('jsonPreview').textContent = JSON.stringify(data, null, 2);
-
-        // Timestamp
-        document.getElementById('timestamp').textContent = `Собрано: ${new Date().toLocaleString()}`;
-    }
-
-    function refreshData() {
-        updateUI();
-        showStatus('Данные обновлены', 'info');
-    }
-
-    function showStatus(message, type) {
-        const statusEl = document.getElementById('copyStatus');
-        statusEl.textContent = message;
-        statusEl.className = `status ${type}`;
-        statusEl.style.display = 'block';
-
-        setTimeout(() => {
-            statusEl.style.display = 'none';
-        }, 2000);
-    }
-
-    async function copyToClipboard() {
-        const data = collectData();
-        const json = JSON.stringify(data, null, 2);
-
-        try {
-            await navigator.clipboard.writeText(json);
-            showStatus('✓ JSON скопирован в буфер обмена!', 'success');
-        } catch (err) {
-            // Fallback for older browsers
-            const textarea = document.createElement('textarea');
-            textarea.value = json;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-
+                descList.appendChild(row);
+            });
+            
+            // JSON preview
+            document.getElementById('jsonPreview').textContent = JSON.stringify(data, null, 2);
+            
+            // Timestamp
+            document.getElementById('timestamp').textContent = `Собрано: ${new Date().toLocaleString()}`;
+        }
+        
+        function refreshData() {
+            updateUI();
+            showStatus('Данные обновлены', 'info');
+        }
+        
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('copyStatus');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 2000);
+        }
+        
+        async function copyToClipboard() {
+            const data = collectData();
+            const json = JSON.stringify(data, null, 2);
+            
             try {
-                document.execCommand('copy');
+                await navigator.clipboard.writeText(json);
                 showStatus('✓ JSON скопирован в буфер обмена!', 'success');
-            } catch (e) {
-                showStatus('❌ Ошибка копирования: ' + e.message, 'info');
+            } catch (err) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = json;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showStatus('✓ JSON скопирован в буфер обмена!', 'success');
+                } catch (e) {
+                    showStatus('❌ Ошибка копирования: ' + e.message, 'info');
+                }
+                
+                document.body.removeChild(textarea);
             }
-
-            document.body.removeChild(textarea);
         }
-    }
-
-    function logConnectionChange() {
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        if (!connection) return;
-
-        const entry = {
-            time: new Date().toISOString(),
-            type: safeGet(connection, 'type'),
-            effectiveType: safeGet(connection, 'effectiveType'),
-            downlink: safeGet(connection, 'downlink'),
-            rtt: safeGet(connection, 'rtt')
-        };
-
-        changeLog.push(entry);
-
-        const logEl = document.getElementById('changeLog');
-        const entryEl = document.createElement('div');
-        entryEl.className = 'change-entry';
-        entryEl.textContent = `${new Date().toLocaleTimeString()} | type: ${entry.type}, eff: ${entry.effectiveType}, down: ${entry.downlink}Mbps, rtt: ${entry.rtt}ms`;
-
-        // Remove placeholder if exists
-        const placeholder = logEl.querySelector('.change-entry[style]');
-        if (placeholder) {
-            placeholder.remove();
-        }
-
-        logEl.insertBefore(entryEl, logEl.firstChild);
-
-        // Keep only last 10 entries in UI
-        while (logEl.children.length > 10) {
-            logEl.removeChild(logEl.lastChild);
-        }
-
-        // Also refresh main data
-        updateUI();
-    }
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-        updateUI();
-
-        // Listen for connection changes
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        if (connection) {
-            connection.addEventListener('change', logConnectionChange);
-        }
-
-        // Listen for online/offline events
-        window.addEventListener('online', () => {
-            logConnectionChange();
+        
+        function logConnectionChange() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (!connection) return;
+            
+            const entry = {
+                time: new Date().toISOString(),
+                type: safeGet(connection, 'type'),
+                effectiveType: safeGet(connection, 'effectiveType'),
+                downlink: safeGet(connection, 'downlink'),
+                rtt: safeGet(connection, 'rtt')
+            };
+            
+            changeLog.push(entry);
+            
+            const logEl = document.getElementById('changeLog');
+            const entryEl = document.createElement('div');
+            entryEl.className = 'change-entry';
+            entryEl.textContent = `${new Date().toLocaleTimeString()} | type: ${entry.type}, eff: ${entry.effectiveType}, down: ${entry.downlink}Mbps, rtt: ${entry.rtt}ms`;
+            
+            // Remove placeholder if exists
+            const placeholder = logEl.querySelector('.change-entry[style]');
+            if (placeholder) {
+                placeholder.remove();
+            }
+            
+            logEl.insertBefore(entryEl, logEl.firstChild);
+            
+            // Keep only last 10 entries in UI
+            while (logEl.children.length > 10) {
+                logEl.removeChild(logEl.lastChild);
+            }
+            
+            // Also refresh main data
             updateUI();
-        });
-
-        window.addEventListener('offline', () => {
-            logConnectionChange();
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
             updateUI();
+            
+            // Listen for connection changes
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection) {
+                connection.addEventListener('change', logConnectionChange);
+            }
+            
+            // Listen for online/offline events
+            window.addEventListener('online', () => {
+                logConnectionChange();
+                updateUI();
+            });
+            
+            window.addEventListener('offline', () => {
+                logConnectionChange();
+                updateUI();
+            });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
