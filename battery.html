@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Battery API Fingerprint Test</title>
+    <title>Battery API Fingerprint Test v2</title>
     <style>
         * {
             box-sizing: border-box;
@@ -50,12 +50,27 @@
             color: #fff;
         }
 
+        .status-warning {
+            background: #ffab00;
+            color: #000;
+        }
+
         .card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card.error {
+            border-color: #ff5252;
+            background: rgba(255, 82, 82, 0.1);
+        }
+
+        .card.warning {
+            border-color: #ffab00;
+            background: rgba(255, 171, 0, 0.1);
         }
 
         .card-title {
@@ -75,10 +90,26 @@
             border-radius: 2px;
         }
 
+        .card.error .card-title {
+            color: #ff5252;
+        }
+
+        .card.error .card-title::before {
+            background: #ff5252;
+        }
+
+        .card.warning .card-title {
+            color: #ffab00;
+        }
+
+        .card.warning .card-title::before {
+            background: #ffab00;
+        }
+
         .param-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
@@ -90,15 +121,16 @@
         .param-name {
             font-size: 13px;
             color: #a0a0a0;
+            flex-shrink: 0;
         }
 
         .param-value {
             font-family: 'Roboto Mono', monospace;
-            font-size: 13px;
+            font-size: 12px;
             color: #fff;
             text-align: right;
             word-break: break-all;
-            max-width: 60%;
+            max-width: 65%;
         }
 
         .param-value.boolean-true {
@@ -115,6 +147,10 @@
 
         .param-value.infinity {
             color: #7c4dff;
+        }
+
+        .param-value.error {
+            color: #ff5252;
         }
 
         .battery-visual {
@@ -253,7 +289,7 @@
             padding: 12px;
             font-family: 'Roboto Mono', monospace;
             font-size: 11px;
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-all;
@@ -271,11 +307,22 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
             margin: 16px 0;
         }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            padding: 8px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 10px;
+            color: #ff8a80;
+            margin-top: 8px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>🔋 Battery API Fingerprint</h1>
+    <h1>🔋 Battery API Fingerprint v2</h1>
 
     <div style="text-align: center;">
         <span id="apiStatus" class="status-badge status-unsupported">Checking...</span>
@@ -289,12 +336,22 @@
         <span id="batteryPercent" class="battery-percent">--%</span>
     </div>
 
+    <!-- Errors Card -->
+    <div class="card error" id="errorsCard" style="display: none;">
+        <div class="card-title">⚠️ Detected Issues (Fingerprint Leaks)</div>
+        <div id="errorsList"></div>
+    </div>
+
     <!-- API Support -->
     <div class="card">
         <div class="card-title">API Support Check</div>
         <div class="param-row">
             <span class="param-name">navigator.getBattery</span>
             <span id="hasGetBattery" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">typeof getBattery</span>
+            <span id="getBatteryType" class="param-value">--</span>
         </div>
         <div class="param-row">
             <span class="param-name">BatteryManager in window</span>
@@ -335,28 +392,65 @@
         </div>
     </div>
 
-    <!-- Computed Values -->
-    <div class="card" id="computedCard" style="display: none;">
-        <div class="card-title">Computed / Fingerprint Values</div>
+    <!-- EventTarget Diagnostics - NEW -->
+    <div class="card" id="eventTargetCard" style="display: none;">
+        <div class="card-title">EventTarget Diagnostics</div>
         <div class="param-row">
-            <span class="param-name">Level Precision</span>
-            <span id="levelPrecision" class="param-value">--</span>
+            <span class="param-name">instanceof EventTarget</span>
+            <span id="instanceofEventTarget" class="param-value">--</span>
         </div>
         <div class="param-row">
-            <span class="param-name">chargingTime (minutes)</span>
-            <span id="chargingTimeMin" class="param-value">--</span>
+            <span class="param-name">addEventListener exists</span>
+            <span id="hasAddEventListener" class="param-value">--</span>
         </div>
         <div class="param-row">
-            <span class="param-name">dischargingTime (minutes)</span>
-            <span id="dischargingTimeMin" class="param-value">--</span>
+            <span class="param-name">addEventListener type</span>
+            <span id="addEventListenerType" class="param-value">--</span>
         </div>
         <div class="param-row">
-            <span class="param-name">Est. Full Capacity (mAh)</span>
-            <span id="estimatedCapacity" class="param-value">--</span>
+            <span class="param-name">addEventListener.call test</span>
+            <span id="addEventListenerCallTest" class="param-value">--</span>
         </div>
         <div class="param-row">
-            <span class="param-name">Fingerprint Hash</span>
-            <span id="fingerprintHash" class="param-value">--</span>
+            <span class="param-name">addEventListener.bind test</span>
+            <span id="addEventListenerBindTest" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">removeEventListener exists</span>
+            <span id="hasRemoveEventListener" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">dispatchEvent exists</span>
+            <span id="hasDispatchEvent" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Events work correctly</span>
+            <span id="eventsWorkCorrectly" class="param-value">--</span>
+        </div>
+    </div>
+
+    <!-- Property Descriptors - NEW -->
+    <div class="card" id="descriptorsCard" style="display: none;">
+        <div class="card-title">Property Descriptors Analysis</div>
+        <div class="param-row">
+            <span class="param-name">charging descriptor</span>
+            <span id="chargingDescriptor" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">level descriptor</span>
+            <span id="levelDescriptor" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">chargingTime descriptor</span>
+            <span id="chargingTimeDescriptor" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">dischargingTime descriptor</span>
+            <span id="dischargingTimeDescriptor" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Properties on prototype</span>
+            <span id="propsOnPrototype" class="param-value">--</span>
         </div>
     </div>
 
@@ -387,7 +481,7 @@
 
     <!-- Event Handlers -->
     <div class="card" id="eventHandlersCard" style="display: none;">
-        <div class="card-title">Event Handlers Presence</div>
+        <div class="card-title">Event Handler Properties</div>
         <div class="param-row">
             <span class="param-name">onchargingchange</span>
             <span id="onchargingchange" class="param-value">--</span>
@@ -403,6 +497,27 @@
         <div class="param-row">
             <span class="param-name">onlevelchange</span>
             <span id="onlevelchange" class="param-value">--</span>
+        </div>
+    </div>
+
+    <!-- Computed Values -->
+    <div class="card" id="computedCard" style="display: none;">
+        <div class="card-title">Computed / Fingerprint Values</div>
+        <div class="param-row">
+            <span class="param-name">Level Precision</span>
+            <span id="levelPrecision" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">chargingTime (minutes)</span>
+            <span id="chargingTimeMin" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">dischargingTime (minutes)</span>
+            <span id="dischargingTimeMin" class="param-value">--</span>
+        </div>
+        <div class="param-row">
+            <span class="param-name">Fingerprint Hash</span>
+            <span id="fingerprintHash" class="param-value">--</span>
         </div>
     </div>
 
@@ -423,15 +538,15 @@
     <button class="btn btn-secondary" onclick="toggleJsonPreview()">
         👁️ Toggle JSON Preview
     </button>
-    <button class="btn btn-secondary" onclick="refreshData()">
-        🔄 Refresh Data
+    <button class="btn btn-secondary" onclick="location.reload()">
+        🔄 Refresh Page
     </button>
 
     <div id="jsonPreview" class="json-preview"></div>
 
     <div class="meta-info">
         <div>Timestamp: <span id="timestamp">--</span></div>
-        <div>User Agent: <span id="userAgent">--</span></div>
+        <div>UA: <span id="userAgent">--</span></div>
     </div>
 </div>
 
@@ -452,20 +567,29 @@
             getBatteryType: null,
             batteryManagerType: null
         },
-        batteryManager: null,
         properties: {
             charging: null,
             chargingTime: null,
             dischargingTime: null,
             level: null
         },
-        computed: {
-            levelPercent: null,
-            levelPrecisionDecimals: null,
-            chargingTimeMinutes: null,
-            dischargingTimeMinutes: null,
-            estimatedCapacityMah: null,
-            fingerprintHash: null
+        eventTarget: {
+            instanceofEventTarget: null,
+            hasAddEventListener: null,
+            addEventListenerType: null,
+            addEventListenerCallTest: null,
+            addEventListenerBindTest: null,
+            hasRemoveEventListener: null,
+            hasDispatchEvent: null,
+            eventsWorkCorrectly: null,
+            eventErrors: []
+        },
+        propertyDescriptors: {
+            charging: null,
+            level: null,
+            chargingTime: null,
+            dischargingTime: null,
+            propsOnPrototype: null
         },
         objectInfo: {
             constructorName: null,
@@ -480,7 +604,16 @@
             ondischargingtimechange: null,
             onlevelchange: null
         },
-        events: []
+        computed: {
+            levelPercent: null,
+            levelPrecisionDecimals: null,
+            chargingTimeMinutes: null,
+            dischargingTimeMinutes: null,
+            fingerprintHash: null
+        },
+        events: [],
+        errors: [],
+        detectedIssues: []
     };
 
     let battery = null;
@@ -493,17 +626,36 @@
         if (batteryData.apiSupport.hasGetBattery) {
             try {
                 battery = await navigator.getBattery();
-                updateBatteryData(battery);
+
+                // Gather all data
+                updateBatteryProperties(battery);
+                checkEventTarget(battery);
+                checkPropertyDescriptors(battery);
+                updateObjectInfo(battery);
+                checkEventHandlers(battery);
+                computeValues(battery);
+
+                // Try to setup events (may fail)
                 setupEventListeners(battery);
+
                 showBatteryCards();
-                document.getElementById('apiStatus').textContent = 'API Supported ✓';
-                document.getElementById('apiStatus').className = 'status-badge status-supported';
+                analyzeIssues();
+
+                if (batteryData.detectedIssues.length > 0) {
+                    document.getElementById('apiStatus').textContent = 'API Issues Detected';
+                    document.getElementById('apiStatus').className = 'status-badge status-warning';
+                } else {
+                    document.getElementById('apiStatus').textContent = 'API Supported ✓';
+                    document.getElementById('apiStatus').className = 'status-badge status-supported';
+                }
+
             } catch (error) {
-                batteryData.error = {
+                batteryData.errors.push({
+                    phase: 'getBattery',
                     message: error.message,
                     name: error.name,
                     stack: error.stack
-                };
+                });
                 document.getElementById('apiStatus').textContent = 'API Error: ' + error.message;
                 document.getElementById('apiStatus').className = 'status-badge status-unsupported';
             }
@@ -519,33 +671,28 @@
         const now = new Date();
         batteryData._meta.timestamp = now.toISOString();
         document.getElementById('timestamp').textContent = now.toLocaleString();
-        document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 50) + '...';
+        document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 60) + '...';
     }
 
     function checkApiSupport() {
-        // Check getBattery
         batteryData.apiSupport.hasGetBattery = 'getBattery' in navigator;
         batteryData.apiSupport.getBatteryType = typeof navigator.getBattery;
-
-        // Check BatteryManager
         batteryData.apiSupport.hasBatteryManager = 'BatteryManager' in window;
         batteryData.apiSupport.batteryManagerType = typeof window.BatteryManager;
 
-        // Update UI
         updateValue('hasGetBattery', batteryData.apiSupport.hasGetBattery, 'boolean');
+        updateValue('getBatteryType', batteryData.apiSupport.getBatteryType);
         updateValue('hasBatteryManager', batteryData.apiSupport.hasBatteryManager, 'boolean');
         updateValue('isSecureContext', window.isSecureContext, 'boolean');
         document.getElementById('protocol').textContent = location.protocol;
     }
 
-    function updateBatteryData(battery) {
-        // Core properties
+    function updateBatteryProperties(battery) {
         batteryData.properties.charging = battery.charging;
         batteryData.properties.chargingTime = battery.chargingTime;
         batteryData.properties.dischargingTime = battery.dischargingTime;
         batteryData.properties.level = battery.level;
 
-        // Update UI - Core
         updateValue('charging', battery.charging, 'boolean');
         updateValue('level', (battery.level * 100).toFixed(2) + '%', 'number');
         updateValue('levelRaw', battery.level, 'number');
@@ -554,94 +701,341 @@
         updateValue('dischargingTime', formatTime(battery.dischargingTime),
             battery.dischargingTime === Infinity ? 'infinity' : 'number');
 
-        // Computed values
+        updateBatteryVisual(battery);
+    }
+
+    function checkEventTarget(battery) {
+        const et = batteryData.eventTarget;
+
+        // instanceof check
+        try {
+            et.instanceofEventTarget = battery instanceof EventTarget;
+        } catch (e) {
+            et.instanceofEventTarget = 'Error: ' + e.message;
+        }
+
+        // addEventListener checks
+        et.hasAddEventListener = 'addEventListener' in battery;
+        et.addEventListenerType = typeof battery.addEventListener;
+
+        // Test addEventListener.call
+        try {
+            const testFn = function() {};
+            battery.addEventListener.call(battery, 'levelchange', testFn);
+            battery.removeEventListener.call(battery, 'levelchange', testFn);
+            et.addEventListenerCallTest = 'OK';
+        } catch (e) {
+            et.addEventListenerCallTest = 'Error: ' + e.message;
+            et.eventErrors.push({ method: 'addEventListener.call', error: e.message });
+        }
+
+        // Test addEventListener with bind
+        try {
+            const testFn = function() {};
+            const boundAdd = battery.addEventListener.bind(battery);
+            const boundRemove = battery.removeEventListener.bind(battery);
+            boundAdd('levelchange', testFn);
+            boundRemove('levelchange', testFn);
+            et.addEventListenerBindTest = 'OK';
+        } catch (e) {
+            et.addEventListenerBindTest = 'Error: ' + e.message;
+            et.eventErrors.push({ method: 'addEventListener.bind', error: e.message });
+        }
+
+        et.hasRemoveEventListener = 'removeEventListener' in battery;
+        et.hasDispatchEvent = 'dispatchEvent' in battery;
+
+        // Update UI
+        updateValue('instanceofEventTarget', et.instanceofEventTarget,
+            et.instanceofEventTarget === true ? 'boolean' : 'error');
+        updateValue('hasAddEventListener', et.hasAddEventListener, 'boolean');
+        updateValue('addEventListenerType', et.addEventListenerType);
+        updateValue('addEventListenerCallTest', et.addEventListenerCallTest,
+            et.addEventListenerCallTest === 'OK' ? 'boolean' : 'error');
+        updateValue('addEventListenerBindTest', et.addEventListenerBindTest,
+            et.addEventListenerBindTest === 'OK' ? 'boolean' : 'error');
+        updateValue('hasRemoveEventListener', et.hasRemoveEventListener, 'boolean');
+        updateValue('hasDispatchEvent', et.hasDispatchEvent, 'boolean');
+    }
+
+    function checkPropertyDescriptors(battery) {
+        const proto = Object.getPrototypeOf(battery);
+        const props = ['charging', 'level', 'chargingTime', 'dischargingTime'];
+
+        props.forEach(prop => {
+            // Check on instance
+            let desc = Object.getOwnPropertyDescriptor(battery, prop);
+            let location = 'instance';
+
+            // If not on instance, check prototype
+            if (!desc && proto) {
+                desc = Object.getOwnPropertyDescriptor(proto, prop);
+                location = 'prototype';
+            }
+
+            if (desc) {
+                batteryData.propertyDescriptors[prop] = {
+                    location: location,
+                    configurable: desc.configurable,
+                    enumerable: desc.enumerable,
+                    hasGetter: typeof desc.get === 'function',
+                    hasSetter: typeof desc.set === 'function',
+                    writable: desc.writable
+                };
+            } else {
+                batteryData.propertyDescriptors[prop] = { location: 'not found' };
+            }
+        });
+
+        // Check if props are on prototype (as they should be)
+        const protoProps = proto ? Object.getOwnPropertyNames(proto) : [];
+        batteryData.propertyDescriptors.propsOnPrototype = props.filter(p => protoProps.includes(p));
+
+        // Update UI
+        props.forEach(prop => {
+            const desc = batteryData.propertyDescriptors[prop];
+            const id = prop + 'Descriptor';
+            if (desc.location === 'not found') {
+                document.getElementById(id).textContent = 'NOT FOUND';
+                document.getElementById(id).className = 'param-value error';
+            } else {
+                const info = `${desc.location}, get:${desc.hasGetter}, set:${desc.hasSetter}`;
+                document.getElementById(id).textContent = info;
+            }
+        });
+
+        document.getElementById('propsOnPrototype').textContent =
+            batteryData.propertyDescriptors.propsOnPrototype.join(', ') || 'none';
+    }
+
+    function updateObjectInfo(battery) {
+        batteryData.objectInfo.constructorName = battery.constructor.name;
+        batteryData.objectInfo.prototypeChain = getPrototypeChain(battery);
+        batteryData.objectInfo.ownPropertyNames = Object.getOwnPropertyNames(battery);
+
+        try {
+            batteryData.objectInfo.toString = battery.toString();
+        } catch (e) {
+            batteryData.objectInfo.toString = 'Error: ' + e.message;
+        }
+
+        try {
+            batteryData.objectInfo.toStringTag = battery[Symbol.toStringTag];
+        } catch (e) {
+            batteryData.objectInfo.toStringTag = 'Error: ' + e.message;
+        }
+
+        document.getElementById('constructorName').textContent = batteryData.objectInfo.constructorName;
+        document.getElementById('prototypeChain').textContent = batteryData.objectInfo.prototypeChain.join(' → ');
+        document.getElementById('ownProps').textContent = batteryData.objectInfo.ownPropertyNames.length > 0 ?
+            batteryData.objectInfo.ownPropertyNames.join(', ') : '(none - correct)';
+        document.getElementById('toStringResult').textContent = batteryData.objectInfo.toString;
+        document.getElementById('toStringTag').textContent = batteryData.objectInfo.toStringTag || 'undefined';
+    }
+
+    function checkEventHandlers(battery) {
+        const handlers = ['onchargingchange', 'onchargingtimechange', 'ondischargingtimechange', 'onlevelchange'];
+
+        handlers.forEach(handler => {
+            batteryData.eventHandlers[handler] = handler in battery;
+            updateValue(handler, batteryData.eventHandlers[handler], 'boolean');
+        });
+    }
+
+    function computeValues(battery) {
         batteryData.computed.levelPercent = battery.level * 100;
         batteryData.computed.levelPrecisionDecimals = getPrecision(battery.level);
         batteryData.computed.chargingTimeMinutes = battery.chargingTime === Infinity ?
             Infinity : Math.round(battery.chargingTime / 60);
         batteryData.computed.dischargingTimeMinutes = battery.dischargingTime === Infinity ?
             Infinity : Math.round(battery.dischargingTime / 60);
-
-        // Estimate capacity (rough approximation)
-        if (battery.dischargingTime !== Infinity && battery.level > 0) {
-            // Assuming average drain of 200mA for typical phone usage
-            const avgDrainMa = 200;
-            const hoursRemaining = battery.dischargingTime / 3600;
-            const remainingMah = avgDrainMa * hoursRemaining;
-            batteryData.computed.estimatedCapacityMah = Math.round(remainingMah / battery.level);
-        }
-
-        // Generate fingerprint hash
         batteryData.computed.fingerprintHash = generateFingerprintHash(battery);
 
-        // Update UI - Computed
         updateValue('levelPrecision', batteryData.computed.levelPrecisionDecimals + ' decimals', 'number');
         updateValue('chargingTimeMin', batteryData.computed.chargingTimeMinutes + ' min',
             battery.chargingTime === Infinity ? 'infinity' : 'number');
         updateValue('dischargingTimeMin', batteryData.computed.dischargingTimeMinutes + ' min',
             battery.dischargingTime === Infinity ? 'infinity' : 'number');
-        updateValue('estimatedCapacity', batteryData.computed.estimatedCapacityMah || 'N/A', 'number');
-        updateValue('fingerprintHash', batteryData.computed.fingerprintHash.substring(0, 16) + '...', 'number');
-
-        // Object info
-        batteryData.objectInfo.constructorName = battery.constructor.name;
-        batteryData.objectInfo.prototypeChain = getPrototypeChain(battery);
-        batteryData.objectInfo.ownPropertyNames = Object.getOwnPropertyNames(battery);
-        batteryData.objectInfo.toString = battery.toString();
-        batteryData.objectInfo.toStringTag = battery[Symbol.toStringTag];
-
-        // Update UI - Object info
-        document.getElementById('constructorName').textContent = batteryData.objectInfo.constructorName;
-        document.getElementById('prototypeChain').textContent = batteryData.objectInfo.prototypeChain.join(' → ');
-        document.getElementById('ownProps').textContent = batteryData.objectInfo.ownPropertyNames.length > 0 ?
-            batteryData.objectInfo.ownPropertyNames.join(', ') : '(none)';
-        document.getElementById('toStringResult').textContent = batteryData.objectInfo.toString;
-        document.getElementById('toStringTag').textContent = batteryData.objectInfo.toStringTag || 'undefined';
-
-        // Event handlers
-        batteryData.eventHandlers.onchargingchange = 'onchargingchange' in battery;
-        batteryData.eventHandlers.onchargingtimechange = 'onchargingtimechange' in battery;
-        batteryData.eventHandlers.ondischargingtimechange = 'ondischargingtimechange' in battery;
-        batteryData.eventHandlers.onlevelchange = 'onlevelchange' in battery;
-
-        // Update UI - Event handlers
-        updateValue('onchargingchange', batteryData.eventHandlers.onchargingchange, 'boolean');
-        updateValue('onchargingtimechange', batteryData.eventHandlers.onchargingtimechange, 'boolean');
-        updateValue('ondischargingtimechange', batteryData.eventHandlers.ondischargingtimechange, 'boolean');
-        updateValue('onlevelchange', batteryData.eventHandlers.onlevelchange, 'boolean');
-
-        // Update battery visual
-        updateBatteryVisual(battery);
-
-        // Update JSON preview
-        updateJsonPreview();
+        updateValue('fingerprintHash', batteryData.computed.fingerprintHash, 'number');
     }
 
     function setupEventListeners(battery) {
         const events = ['chargingchange', 'chargingtimechange', 'dischargingtimechange', 'levelchange'];
+        let allWorked = true;
 
         events.forEach(eventName => {
-            battery.addEventListener(eventName, (event) => {
-                const eventData = {
-                    type: eventName,
-                    timestamp: new Date().toISOString(),
-                    charging: battery.charging,
-                    chargingTime: battery.chargingTime,
-                    dischargingTime: battery.dischargingTime,
-                    level: battery.level
-                };
+            try {
+                // Try direct addEventListener
+                battery.addEventListener(eventName, (event) => {
+                    const eventData = {
+                        type: eventName,
+                        timestamp: new Date().toISOString(),
+                        charging: battery.charging,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime,
+                        level: battery.level
+                    };
 
-                batteryData.events.push(eventData);
+                    batteryData.events.push(eventData);
+                    if (batteryData.events.length > 50) {
+                        batteryData.events.shift();
+                    }
 
-                // Keep only last 50 events
-                if (batteryData.events.length > 50) {
-                    batteryData.events.shift();
+                    logEvent(eventData);
+                    updateBatteryProperties(battery);
+                    computeValues(battery);
+                    updateJsonPreview();
+                });
+            } catch (e) {
+                allWorked = false;
+                batteryData.eventTarget.eventErrors.push({
+                    event: eventName,
+                    method: 'addEventListener',
+                    error: e.message
+                });
+
+                // Fallback: try using onXXX property
+                try {
+                    const handlerName = 'on' + eventName;
+                    if (handlerName in battery) {
+                        battery[handlerName] = () => {
+                            logEvent({
+                                type: eventName + ' (via on-handler)',
+                                timestamp: new Date().toISOString(),
+                                level: battery.level
+                            });
+                        };
+                    }
+                } catch (e2) {
+                    // Even fallback failed
                 }
-
-                logEvent(eventData);
-                updateBatteryData(battery);
-            });
+            }
         });
+
+        batteryData.eventTarget.eventsWorkCorrectly = allWorked;
+        updateValue('eventsWorkCorrectly', allWorked, 'boolean');
+    }
+
+    function analyzeIssues() {
+        const issues = [];
+
+        // Check EventTarget issues
+        if (batteryData.eventTarget.addEventListenerCallTest !== 'OK') {
+            issues.push({
+                severity: 'high',
+                issue: 'addEventListener.call() fails with "Illegal invocation"',
+                cause: 'EventTarget methods not properly bound to BatteryManager instance',
+                fix: 'Ensure addEventListener/removeEventListener are bound to the correct this context, or inherit properly from EventTarget'
+            });
+        }
+
+        if (!batteryData.eventTarget.instanceofEventTarget) {
+            issues.push({
+                severity: 'high',
+                issue: 'battery instanceof EventTarget returns false',
+                cause: 'BatteryManager prototype chain is broken',
+                fix: 'Ensure BatteryManager.prototype inherits from EventTarget.prototype'
+            });
+        }
+
+        // Check prototype chain
+        const expectedChain = ['BatteryManager', 'EventTarget', 'Object'];
+        const actualChain = batteryData.objectInfo.prototypeChain;
+        if (JSON.stringify(expectedChain) !== JSON.stringify(actualChain)) {
+            issues.push({
+                severity: 'medium',
+                issue: 'Prototype chain mismatch',
+                expected: expectedChain.join(' → '),
+                actual: actualChain.join(' → ')
+            });
+        }
+
+        // Check own properties (should be none)
+        if (batteryData.objectInfo.ownPropertyNames.length > 0) {
+            issues.push({
+                severity: 'medium',
+                issue: 'BatteryManager has own properties (should be on prototype)',
+                ownProps: batteryData.objectInfo.ownPropertyNames
+            });
+        }
+
+        // Check property descriptors
+        const props = ['charging', 'level', 'chargingTime', 'dischargingTime'];
+        props.forEach(prop => {
+            const desc = batteryData.propertyDescriptors[prop];
+            if (desc.location === 'instance') {
+                issues.push({
+                    severity: 'low',
+                    issue: `"${prop}" property is on instance instead of prototype`,
+                    fix: 'Move property getter to BatteryManager.prototype'
+                });
+            }
+            if (desc.location !== 'not found' && !desc.hasGetter) {
+                issues.push({
+                    severity: 'low',
+                    issue: `"${prop}" property has no getter`,
+                    fix: 'Define property with getter function'
+                });
+            }
+        });
+
+        // Check toString
+        if (batteryData.objectInfo.toString !== '[object BatteryManager]') {
+            issues.push({
+                severity: 'low',
+                issue: 'toString() returns wrong value',
+                expected: '[object BatteryManager]',
+                actual: batteryData.objectInfo.toString
+            });
+        }
+
+        // Check toStringTag
+        if (batteryData.objectInfo.toStringTag !== 'BatteryManager') {
+            issues.push({
+                severity: 'low',
+                issue: 'Symbol.toStringTag is wrong or missing',
+                expected: 'BatteryManager',
+                actual: batteryData.objectInfo.toStringTag
+            });
+        }
+
+        // Check logical consistency
+        if (batteryData.properties.charging === true &&
+            batteryData.properties.dischargingTime !== Infinity) {
+            issues.push({
+                severity: 'high',
+                issue: 'charging=true but dischargingTime is not Infinity',
+                fix: 'When charging, dischargingTime must be Infinity'
+            });
+        }
+
+        if (batteryData.properties.charging === false &&
+            batteryData.properties.chargingTime !== Infinity) {
+            issues.push({
+                severity: 'high',
+                issue: 'charging=false but chargingTime is not Infinity',
+                fix: 'When not charging, chargingTime must be Infinity'
+            });
+        }
+
+        batteryData.detectedIssues = issues;
+
+        // Display issues
+        if (issues.length > 0) {
+            const errorsCard = document.getElementById('errorsCard');
+            const errorsList = document.getElementById('errorsList');
+            errorsCard.style.display = 'block';
+
+            errorsList.innerHTML = issues.map(issue => `
+                    <div class="param-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="param-name" style="color: ${issue.severity === 'high' ? '#ff5252' : issue.severity === 'medium' ? '#ffab00' : '#fff'}">
+                            [${issue.severity.toUpperCase()}] ${issue.issue}
+                        </span>
+                        ${issue.fix ? `<div class="code-block">Fix: ${issue.fix}</div>` : ''}
+                        ${issue.expected ? `<div style="font-size: 11px; color: #888; margin-top: 4px;">Expected: ${issue.expected}, Got: ${issue.actual}</div>` : ''}
+                    </div>
+                `).join('');
+        }
     }
 
     function logEvent(eventData) {
@@ -651,7 +1045,7 @@
         const eventHtml = `<div class="event-item">
                 <span class="event-time">[${time}]</span>
                 <span class="event-name">${eventData.type}</span>
-                → level: ${(eventData.level * 100).toFixed(1)}%, charging: ${eventData.charging}
+                → level: ${(eventData.level * 100).toFixed(1)}%
             </div>`;
 
         if (logEl.querySelector('div[style]')) {
@@ -680,37 +1074,41 @@
     }
 
     function showBatteryCards() {
-        document.getElementById('corePropsCard').style.display = 'block';
-        document.getElementById('computedCard').style.display = 'block';
-        document.getElementById('objectPropsCard').style.display = 'block';
-        document.getElementById('eventHandlersCard').style.display = 'block';
-        document.getElementById('eventsCard').style.display = 'block';
+        ['corePropsCard', 'eventTargetCard', 'descriptorsCard', 'objectPropsCard',
+            'eventHandlersCard', 'computedCard', 'eventsCard'].forEach(id => {
+            document.getElementById(id).style.display = 'block';
+        });
     }
 
     function updateValue(elementId, value, type) {
         const el = document.getElementById(elementId);
-        el.textContent = String(value);
+        if (!el) return;
 
+        el.textContent = String(value);
         el.className = 'param-value';
+
         if (type === 'boolean') {
             el.classList.add(value ? 'boolean-true' : 'boolean-false');
         } else if (type === 'number') {
             el.classList.add('number');
         } else if (type === 'infinity') {
             el.classList.add('infinity');
+        } else if (type === 'error') {
+            el.classList.add('error');
         }
     }
 
     function formatTime(seconds) {
         if (seconds === Infinity) return 'Infinity';
         if (seconds === 0) return '0';
+        if (seconds === null || seconds === undefined) return 'null';
 
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         const secs = Math.floor(seconds % 60);
 
         if (hours > 0) {
-            return `${hours}h ${minutes}m ${secs}s (${seconds}s)`;
+            return `${hours}h ${minutes}m (${seconds}s)`;
         } else if (minutes > 0) {
             return `${minutes}m ${secs}s (${seconds}s)`;
         } else {
@@ -719,6 +1117,7 @@
     }
 
     function getPrecision(num) {
+        if (num === null || num === undefined) return 0;
         const str = num.toString();
         if (str.indexOf('.') === -1) return 0;
         return str.split('.')[1].length;
@@ -742,7 +1141,6 @@
             battery.dischargingTime
         ].join('|');
 
-        // Simple hash for fingerprint
         let hash = 0;
         for (let i = 0; i < data.length; i++) {
             const char = data.charCodeAt(i);
@@ -776,7 +1174,6 @@
             await navigator.clipboard.writeText(data);
             showToast('Copied to clipboard!');
         } catch (err) {
-            // Fallback for older browsers
             const textarea = document.createElement('textarea');
             textarea.value = data;
             textarea.style.position = 'fixed';
@@ -803,15 +1200,6 @@
         setTimeout(() => {
             toast.classList.remove('show');
         }, 2000);
-    }
-
-    async function refreshData() {
-        if (battery) {
-            updateBatteryData(battery);
-            showToast('Data refreshed!');
-        } else {
-            await init();
-        }
     }
 
     // Start
