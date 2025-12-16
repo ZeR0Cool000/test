@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sensor Fingerprint Diagnostic (Full)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        h1 {
+            font-size: 18px;
+            color: #58a6ff;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 14px;
+            color: #8b949e;
+            margin: 16px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #30363d;
+        }
+        h3 {
+            font-size: 12px;
+            color: #58a6ff;
+            margin: 10px 0 6px;
+        }
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #21262d;
+        }
+        .row:last-child { border-bottom: none; }
+        .label { color: #8b949e; font-size: 12px; }
+        .value {
+            color: #7ee787;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+            text-align: right;
+            max-width: 65%;
+            word-break: break-all;
+        }
+        .value.error { color: #f85149; }
+        .value.warning { color: #d29922; }
+        .value.null { color: #6e7681; }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #238636;
+            color: white;
+        }
+        .btn-primary:hover { background: #2ea043; }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-secondary {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+        }
+        .btn-copy {
+            background: #1f6feb;
+            color: white;
+        }
+        .btn-copy:hover { background: #388bfd; }
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .status.success { background: #238636; color: white; }
+        .status.error { background: #f85149; color: white; }
+        .status.info { background: #1f6feb; color: white; }
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+        .perm-item {
+            background: #21262d;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .perm-item .name { font-size: 10px; color: #8b949e; }
+        .perm-item .state { font-size: 11px; font-weight: 600; margin-top: 2px; }
+        .perm-item .state.granted { color: #7ee787; }
+        .perm-item .state.denied { color: #f85149; }
+        .perm-item .state.prompt { color: #d29922; }
+        .quaternion-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .quat-item {
+            background: #21262d;
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .quat-item .axis { font-size: 10px; color: #8b949e; }
+        .quat-item .val { font-size: 11px; color: #7ee787; font-family: monospace; }
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #f85149;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 1s infinite;
+        }
+        .live-indicator.active { background: #7ee787; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .subsection {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 8px 0;
+        }
+        .subsection-title {
+            font-size: 11px;
+            color: #8b949e;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px;
+            overflow-x: auto;
+            font-size: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .hidden { display: none; }
+        .descriptor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            font-size: 10px;
+        }
+        .descriptor-item {
+            background: #21262d;
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+        .collapse-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .collapse-btn:hover { background: #30363d; }
+    </style>
+</head>
+<body>
+<h1>🔬 Sensor Fingerprint Diagnostic (Full)</h1>
+
+<div class="section">
+    <button class="btn btn-primary" id="btnStart">▶️ Запустить сбор данных</button>
+    <button class="btn btn-secondary" id="btnStop">⏹️ Остановить</button>
+    <button class="btn btn-copy" id="btnCopy">📋 Копировать JSON</button>
+    <div id="statusMsg" class="status hidden"></div>
+</div>
+
+<!-- API Support -->
+<div class="section">
+    <h2>🔌 API Support</h2>
+    <div id="apiSupport"></div>
+</div>
+
+<!-- Permissions -->
+<div class="section">
+    <h2>🔐 Permissions</h2>
+    <div class="permissions-grid" id="permissions"></div>
+</div>
+
+<!-- Prototype Analysis -->
+<div class="section">
+    <h2>🧬 Prototype Analysis (Anti-Detection)</h2>
+    <div id="prototypeAnalysis"></div>
+</div>
+
+<!-- Property Descriptors -->
+<div class="section">
+    <h2>📋 Property Descriptors</h2>
+    <div id="propertyDescriptors"></div>
+</div>
+
+<!-- Generic Sensor API -->
+<div class="section">
+    <h2><span class="live-indicator" id="gLive"></span>Generic Sensor API - Live Data</h2>
+
+    <h3>Accelerometer</h3>
+    <div id="accelerometerData"></div>
+
+    <h3>LinearAccelerationSensor</h3>
+    <div id="linearAccelData"></div>
+
+    <h3>GravitySensor</h3>
+    <div id="gravityData"></div>
+
+    <h3>Gyroscope</h3>
+    <div id="gyroscopeData"></div>
+
+    <h3>Magnetometer</h3>
+    <div id="magnetometerData"></div>
+
+    <h3>AbsoluteOrientationSensor</h3>
+    <div id="absOrientData"></div>
+
+    <h3>RelativeOrientationSensor</h3>
+    <div id="relOrientData"></div>
+</div>
+
+<!-- Legacy Events -->
+<div class="section">
+    <h2><span class="live-indicator" id="lLive"></span>Legacy Device Events - Live Data</h2>
+
+    <h3>DeviceOrientationEvent</h3>
+    <div id="deviceOrientData"></div>
+
+    <h3>DeviceMotionEvent</h3>
+    <div id="deviceMotionData"></div>
+</div>
+
+<!-- Constructor Analysis -->
+<div class="section">
+    <h2>🏗️ Constructor Analysis</h2>
+    <div id="constructorAnalysis"></div>
+</div>
+
+<!-- Instance Metadata -->
+<div class="section">
+    <h2>📊 Instance Metadata</h2>
+    <div id="instanceMeta"></div>
+</div>
+
+<!-- Raw JSON -->
+<div class="section">
+    <h2>📄 Raw JSON Output</h2>
+    <button class="collapse-btn" id="toggleJson">Show/Hide JSON</button>
+    <pre id="jsonOutput" class="hidden">{}</pre>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        const collectedData = {
+            timestamp: null,
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+
+            // API Support
+            apiSupport: {},
+
+            // Permissions
+            permissions: {},
+
+            // Prototype Analysis (Anti-Detection)
+            prototypeAnalysis: {
+                Sensor: null,
+                Accelerometer: null,
+                LinearAccelerationSensor: null,
+                GravitySensor: null,
+                Gyroscope: null,
+                Magnetometer: null,
+                OrientationSensor: null,
+                AbsoluteOrientationSensor: null,
+                RelativeOrientationSensor: null,
+                DeviceOrientationEvent: null,
+                DeviceMotionEvent: null,
+                DeviceMotionEventAcceleration: null,
+                DeviceMotionEventRotationRate: null
+            },
+
+            // Property Descriptors
+            propertyDescriptors: {
+                Sensor: {},
+                Accelerometer: {},
+                Gyroscope: {},
+                OrientationSensor: {},
+                DeviceOrientationEvent: {},
+                DeviceMotionEvent: {}
+            },
+
+            // Constructor Analysis
+            constructorAnalysis: {},
+
+            // Live Sensor Data
+            genericSensors: {
+                accelerometer: null,
+                linearAcceleration: null,
+                gravity: null,
+                gyroscope: null,
+                magnetometer: null,
+                absoluteOrientation: null,
+                relativeOrientation: null
+            },
+
+            // Legacy Events
+            legacyEvents: {
+                deviceOrientation: null,
+                deviceMotion: null
+            },
+
+            // Instance Metadata
+            instanceMetadata: {}
+        };
+
+        const sensors = {};
+        let isRunning = false;
+
+        // === Helper Functions ===
+        function formatValue(val, precision = 6) {
+            if (val === null || val === undefined) return '<span class="value null">null</span>';
+            if (typeof val === 'number') {
+                if (isNaN(val)) return '<span class="value warning">NaN</span>';
+                return val.toFixed(precision);
+            }
+            if (typeof val === 'boolean') return val ? 'true' : 'false';
+            if (Array.isArray(val)) return '[' + val.map(v => typeof v === 'number' ? v.toFixed(4) : v).join(', ') + ']';
+            return String(val);
+        }
+
+        function createRow(label, value, valueClass = '') {
+            return `<div class="row"><span class="label">${label}</span><span class="value ${valueClass}">${value}</span></div>`;
+        }
+
+        function showStatus(msg, type = 'info') {
+            const el = document.getElementById('statusMsg');
+            el.textContent = msg;
+            el.className = `status ${type}`;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        function safeToString(fn) {
+            try {
+                return fn.toString();
+            } catch (e) {
+                return 'Error: ' + e.message;
+            }
+        }
+
+        function getPropertyDescriptor(obj, prop) {
+            let current = obj;
+            while (current) {
+                const desc = Object.getOwnPropertyDescriptor(current, prop);
+                if (desc) {
+                    return {
+                        found: true,
+                        owner: current.constructor ? current.constructor.name : 'Unknown',
+                        configurable: desc.configurable,
+                        enumerable: desc.enumerable,
+                        writable: desc.writable,
+                        hasGetter: typeof desc.get === 'function',
+                        hasSetter: typeof desc.set === 'function',
+                        getterString: desc.get ? safeToString(desc.get).substring(0, 100) : null,
+                        setterString: desc.set ? safeToString(desc.set).substring(0, 100) : null,
+                        value: desc.value !== undefined ? typeof desc.value : undefined
+                    };
+                }
+                current = Object.getPrototypeOf(current);
+            }
+            return { found: false };
+        }
+
+        // === Check API Support ===
+        function checkAPISupport() {
+            const apis = {
+                'Sensor': typeof Sensor !== 'undefined',
+                'Accelerometer': typeof Accelerometer !== 'undefined',
+                'LinearAccelerationSensor': typeof LinearAccelerationSensor !== 'undefined',
+                'GravitySensor': typeof GravitySensor !== 'undefined',
+                'Gyroscope': typeof Gyroscope !== 'undefined',
+                'Magnetometer': typeof Magnetometer !== 'undefined',
+                'OrientationSensor': typeof OrientationSensor !== 'undefined',
+                'AbsoluteOrientationSensor': typeof AbsoluteOrientationSensor !== 'undefined',
+                'RelativeOrientationSensor': typeof RelativeOrientationSensor !== 'undefined',
+                'DeviceOrientationEvent': typeof DeviceOrientationEvent !== 'undefined',
+                'DeviceMotionEvent': typeof DeviceMotionEvent !== 'undefined',
+                'Permissions API': 'permissions' in navigator
+            };
+
+            collectedData.apiSupport = apis;
+
+            let html = '';
+            for (const [name, supported] of Object.entries(apis)) {
+                html += createRow(name, supported ? '✅ Supported' : '❌ Not supported', supported ? '' : 'error');
+            }
+            document.getElementById('apiSupport').innerHTML = html;
+        }
+
+        // === Check Permissions ===
+        async function checkPermissions() {
+            const permNames = ['accelerometer', 'gyroscope', 'magnetometer'];
+            const el = document.getElementById('permissions');
+            let html = '';
+
+            for (const name of permNames) {
+                try {
+                    const result = await navigator.permissions.query({ name });
+                    collectedData.permissions[name] = {
+                        state: result.state,
+                        name: result.name
+                    };
+                    html += `<div class="perm-item">
+                        <div class="name">${name}</div>
+                        <div class="state ${result.state}">${result.state}</div>
+                    </div>`;
+                } catch (e) {
+                    collectedData.permissions[name] = { error: e.message };
+                    html += `<div class="perm-item">
+                        <div class="name">${name}</div>
+                        <div class="state denied">N/A</div>
+                    </div>`;
+                }
+            }
+            el.innerHTML = html;
+        }
+
+        // === Analyze Prototype (Anti-Detection) ===
+        function analyzePrototype(ClassName) {
+            const cls = window[ClassName];
+            if (!cls) {
+                return { exists: false };
+            }
+
+            const analysis = {
+                exists: true,
+
+                // Constructor info
+                constructorName: cls.name,
+                constructorLength: cls.length,
+                constructorToString: safeToString(cls).substring(0, 150),
+
+                // Prototype chain
+                prototypeChain: [],
+
+                // Symbol.toStringTag
+                toStringTag: null,
+
+                // Prototype properties
+                prototypeOwnProperties: [],
+                prototypePropertyDescriptors: {},
+
+                // Static properties
+                staticOwnProperties: Object.getOwnPropertyNames(cls).filter(p => p !== 'prototype' && p !== 'length' && p !== 'name'),
+
+                // instanceof checks
+                instanceofChecks: {},
+
+                // toString results
+                toStringResults: {}
+            };
+
+            // Get prototype chain
+            let proto = cls.prototype;
+            while (proto && proto !== Object.prototype) {
+                const name = proto.constructor ? proto.constructor.name : 'Unknown';
+                analysis.prototypeChain.push(name);
+                proto = Object.getPrototypeOf(proto);
+            }
+
+            // Get Symbol.toStringTag
+            if (cls.prototype) {
+                try {
+                    analysis.toStringTag = cls.prototype[Symbol.toStringTag] || null;
+                } catch (e) {}
+            }
+
+            // Get prototype own properties and their descriptors
+            if (cls.prototype) {
+                analysis.prototypeOwnProperties = Object.getOwnPropertyNames(cls.prototype);
+
+                for (const prop of analysis.prototypeOwnProperties) {
+                    try {
+                        const desc = Object.getOwnPropertyDescriptor(cls.prototype, prop);
+                        analysis.prototypePropertyDescriptors[prop] = {
+                            configurable: desc.configurable,
+                            enumerable: desc.enumerable,
+                            writable: desc.writable,
+                            hasGetter: typeof desc.get === 'function',
+                            hasSetter: typeof desc.set === 'function',
+                            getterToString: desc.get ? safeToString(desc.get).substring(0, 80) : null,
+                            valueType: desc.value !== undefined ? typeof desc.value : undefined
+                        };
+                    } catch (e) {
+                        analysis.prototypePropertyDescriptors[prop] = { error: e.message };
+                    }
+                }
+            }
+
+            // toString results
+            try {
+                analysis.toStringResults.class = cls.toString().substring(0, 100);
+            } catch (e) {}
+
+            if (cls.prototype) {
+                try {
+                    analysis.toStringResults.prototype = Object.prototype.toString.call(cls.prototype);
+                } catch (e) {}
+            }
+
+            return analysis;
+        }
+
+        // === Analyze All Prototypes ===
+        function analyzeAllPrototypes() {
+            const classes = [
+                'Sensor', 'Accelerometer', 'LinearAccelerationSensor', 'GravitySensor',
+                'Gyroscope', 'Magnetometer', 'OrientationSensor',
+                'AbsoluteOrientationSensor', 'RelativeOrientationSensor',
+                'DeviceOrientationEvent', 'DeviceMotionEvent'
+            ];
+
+            for (const cls of classes) {
+                collectedData.prototypeAnalysis[cls] = analyzePrototype(cls);
+            }
+
+            renderPrototypeAnalysis();
+        }
+
+        function renderPrototypeAnalysis() {
+            const el = document.getElementById('prototypeAnalysis');
+            let html = '';
+
+            for (const [name, analysis] of Object.entries(collectedData.prototypeAnalysis)) {
+                if (!analysis || !analysis.exists) {
+                    html += `<div class="subsection">
+                        <div class="subsection-title">${name}</div>
+                        <div class="value error">Not available</div>
+                    </div>`;
+                    continue;
+                }
+
+                html += `<div class="subsection">
+                    <div class="subsection-title">${name}</div>
+                    ${createRow('constructor.name', analysis.constructorName)}
+                    ${createRow('constructor.length', analysis.constructorLength)}
+                    ${createRow('Symbol.toStringTag', analysis.toStringTag || 'undefined')}
+                    ${createRow('prototypeChain', analysis.prototypeChain.join(' → '))}
+                    ${createRow('prototypeOwnProperties', analysis.prototypeOwnProperties.join(', '))}
+                    ${createRow('staticProperties', analysis.staticOwnProperties.join(', ') || 'none')}
+                </div>`;
+            }
+
+            el.innerHTML = html;
+        }
+
+        // === Analyze Property Descriptors ===
+        function analyzePropertyDescriptors() {
+            // Sensor base properties
+            const sensorProps = ['activated', 'hasReading', 'timestamp', 'onreading', 'onactivate', 'onerror', 'start', 'stop'];
+
+            // XYZ sensor properties
+            const xyzProps = ['x', 'y', 'z'];
+
+            // Orientation sensor properties
+            const orientProps = ['quaternion', 'populateMatrix'];
+
+            // DeviceOrientationEvent properties
+            const orientEventProps = ['alpha', 'beta', 'gamma', 'absolute'];
+
+            // DeviceMotionEvent properties
+            const motionEventProps = ['acceleration', 'accelerationIncludingGravity', 'rotationRate', 'interval'];
+
+            collectedData.propertyDescriptors = {
+                Sensor: {},
+                Accelerometer: {},
+                Gyroscope: {},
+                OrientationSensor: {},
+                DeviceOrientationEvent: {},
+                DeviceMotionEvent: {}
+            };
+
+            // Analyze Sensor prototype
+            if (typeof Sensor !== 'undefined') {
+                for (const prop of sensorProps) {
+                    collectedData.propertyDescriptors.Sensor[prop] = getPropertyDescriptor(Sensor.prototype, prop);
+                }
+            }
+
+            // Analyze Accelerometer prototype (includes x, y, z)
+            if (typeof Accelerometer !== 'undefined') {
+                for (const prop of [...sensorProps, ...xyzProps]) {
+                    collectedData.propertyDescriptors.Accelerometer[prop] = getPropertyDescriptor(Accelerometer.prototype, prop);
+                }
+            }
+
+            // Analyze Gyroscope prototype
+            if (typeof Gyroscope !== 'undefined') {
+                for (const prop of [...sensorProps, ...xyzProps]) {
+                    collectedData.propertyDescriptors.Gyroscope[prop] = getPropertyDescriptor(Gyroscope.prototype, prop);
+                }
+            }
+
+            // Analyze OrientationSensor prototype
+            if (typeof OrientationSensor !== 'undefined') {
+                for (const prop of [...sensorProps, ...orientProps]) {
+                    collectedData.propertyDescriptors.OrientationSensor[prop] = getPropertyDescriptor(OrientationSensor.prototype, prop);
+                }
+            }
+
+            // Analyze DeviceOrientationEvent prototype
+            if (typeof DeviceOrientationEvent !== 'undefined') {
+                for (const prop of orientEventProps) {
+                    collectedData.propertyDescriptors.DeviceOrientationEvent[prop] = getPropertyDescriptor(DeviceOrientationEvent.prototype, prop);
+                }
+            }
+
+            // Analyze DeviceMotionEvent prototype
+            if (typeof DeviceMotionEvent !== 'undefined') {
+                for (const prop of motionEventProps) {
+                    collectedData.propertyDescriptors.DeviceMotionEvent[prop] = getPropertyDescriptor(DeviceMotionEvent.prototype, prop);
+                }
+            }
+
+            renderPropertyDescriptors();
+        }
+
+        function renderPropertyDescriptors() {
+            const el = document.getElementById('propertyDescriptors');
+            let html = '';
+
+            for (const [className, props] of Object.entries(collectedData.propertyDescriptors)) {
+                if (Object.keys(props).length === 0) continue;
+
+                html += `<div class="subsection">
+                    <div class="subsection-title">${className}</div>`;
+
+                for (const [propName, desc] of Object.entries(props)) {
+                    if (!desc.found) {
+                        html += createRow(propName, 'not found', 'warning');
+                        continue;
+                    }
+
+                    const info = [];
+                    if (desc.hasGetter) info.push('getter');
+                    if (desc.hasSetter) info.push('setter');
+                    if (desc.writable !== undefined) info.push(desc.writable ? 'writable' : 'readonly');
+                    if (desc.configurable) info.push('configurable');
+                    if (desc.enumerable) info.push('enumerable');
+                    info.push(`@${desc.owner}`);
+
+                    html += createRow(propName, info.join(', '));
+                }
+
+                html += `</div>`;
+            }
+
+            el.innerHTML = html || '<div class="value warning">No descriptors available</div>';
+        }
+
+        // === Analyze Constructors ===
+        function analyzeConstructors() {
+            const constructors = [
+                'Sensor', 'Accelerometer', 'LinearAccelerationSensor', 'GravitySensor',
+                'Gyroscope', 'Magnetometer', 'OrientationSensor',
+                'AbsoluteOrientationSensor', 'RelativeOrientationSensor'
+            ];
+
+            for (const name of constructors) {
+                const cls = window[name];
+                if (!cls) {
+                    collectedData.constructorAnalysis[name] = { exists: false };
+                    continue;
+                }
+
+                collectedData.constructorAnalysis[name] = {
+                    exists: true,
+                    name: cls.name,
+                    length: cls.length,
+                    toString: safeToString(cls).substring(0, 150),
+                    hasPrototype: !!cls.prototype,
+                    prototypeConstructor: cls.prototype ? cls.prototype.constructor === cls : false,
+                    isNativeCode: safeToString(cls).includes('[native code]')
+                };
+            }
+
+            renderConstructorAnalysis();
+        }
+
+        function renderConstructorAnalysis() {
+            const el = document.getElementById('constructorAnalysis');
+            let html = '';
+
+            for (const [name, info] of Object.entries(collectedData.constructorAnalysis)) {
+                if (!info.exists) {
+                    html += `<div class="subsection">
+                        <div class="subsection-title">${name}</div>
+                        <div class="value error">Not available</div>
+                    </div>`;
+                    continue;
+                }
+
+                html += `<div class="subsection">
+                    <div class="subsection-title">${name}</div>
+                    ${createRow('name', info.name)}
+                    ${createRow('length', info.length)}
+                    ${createRow('isNativeCode', info.isNativeCode ? '✅ Yes' : '❌ No', info.isNativeCode ? '' : 'error')}
+                    ${createRow('prototype.constructor === this', info.prototypeConstructor ? '✅ Yes' : '❌ No')}
+                    ${createRow('toString()', info.toString)}
+                </div>`;
+            }
+
+            el.innerHTML = html;
+        }
+
+        // === Extract Instance Metadata ===
+        function extractInstanceMetadata(sensor, name) {
+            const meta = {
+                constructorName: sensor.constructor.name,
+
+                // Object identity
+                objectToString: Object.prototype.toString.call(sensor),
+
+                // Symbol.toStringTag
+                symbolToStringTag: sensor[Symbol.toStringTag] || null,
+
+                // instanceof checks
+                instanceofSensor: typeof Sensor !== 'undefined' ? sensor instanceof Sensor : null,
+                instanceofEventTarget: sensor instanceof EventTarget,
+
+                // Own properties
+                ownPropertyNames: Object.getOwnPropertyNames(sensor),
+                ownPropertySymbols: Object.getOwnPropertySymbols(sensor).map(s => s.toString()),
+
+                // Prototype chain
+                prototypeChain: [],
+
+                // State properties
+                activated: sensor.activated,
+                hasReading: sensor.hasReading,
+                timestamp: sensor.timestamp,
+
+                // Event handlers
+                onreading: typeof sensor.onreading,
+                onactivate: typeof sensor.onactivate,
+                onerror: typeof sensor.onerror,
+
+                // Methods existence
+                hasStart: typeof sensor.start === 'function',
+                hasStop: typeof sensor.stop === 'function',
+                hasAddEventListener: typeof sensor.addEventListener === 'function'
+            };
+
+            // Get prototype chain
+            let proto = Object.getPrototypeOf(sensor);
+            while (proto && proto !== Object.prototype) {
+                meta.prototypeChain.push(proto.constructor ? proto.constructor.name : 'Unknown');
+                proto = Object.getPrototypeOf(proto);
+            }
+
+            // For orientation sensors
+            if (sensor.quaternion !== undefined) {
+                meta.hasQuaternion = true;
+                meta.quaternionType = sensor.quaternion ? sensor.quaternion.constructor.name : null;
+                meta.hasPopulateMatrix = typeof sensor.populateMatrix === 'function';
+            }
+
+            return meta;
+        }
+
+        function renderInstanceMetadata() {
+            const el = document.getElementById('instanceMeta');
+            let html = '';
+
+            for (const [name, meta] of Object.entries(collectedData.instanceMetadata)) {
+                if (!meta) continue;
+
+                html += `<div class="subsection">
+                    <div class="subsection-title">${name}</div>
+                    ${createRow('constructor.name', meta.constructorName)}
+                    ${createRow('Object.prototype.toString', meta.objectToString)}
+                    ${createRow('Symbol.toStringTag', meta.symbolToStringTag || 'undefined')}
+                    ${createRow('instanceof Sensor', meta.instanceofSensor === null ? 'N/A' : meta.instanceofSensor)}
+                    ${createRow('instanceof EventTarget', meta.instanceofEventTarget)}
+                    ${createRow('prototypeChain', meta.prototypeChain.join(' → '))}
+                    ${createRow('ownPropertyNames', meta.ownPropertyNames.join(', ') || 'none')}
+                    ${createRow('methods', [
+                    meta.hasStart ? 'start' : '',
+                    meta.hasStop ? 'stop' : '',
+                    meta.hasAddEventListener ? 'addEventListener' : '',
+                    meta.hasPopulateMatrix ? 'populateMatrix' : ''
+                ].filter(Boolean).join(', '))}
+                </div>`;
+            }
+
+            el.innerHTML = html || '<div class="value warning">Start sensors to see instance metadata</div>';
+        }
+
+        // === Render XYZ Sensor Data ===
+        function renderXYZData(data, containerId) {
+            if (!data) {
+                document.getElementById(containerId).innerHTML = '<div class="value error">Sensor not available</div>';
+                return;
+            }
+
+            if (data.error) {
+                document.getElementById(containerId).innerHTML = `<div class="value error">${data.error}</div>`;
+                return;
+            }
+
+            let html = '';
+            html += createRow('x', formatValue(data.x));
+            html += createRow('y', formatValue(data.y));
+            html += createRow('z', formatValue(data.z));
+            html += createRow('timestamp', formatValue(data.timestamp, 2));
+            html += createRow('activated', formatValue(data.activated));
+            html += createRow('hasReading', formatValue(data.hasReading));
+
+            document.getElementById(containerId).innerHTML = html;
+        }
+
+        // === Render Orientation Data ===
+        function renderOrientationData(data, containerId) {
+            if (!data) {
+                document.getElementById(containerId).innerHTML = '<div class="value error">Sensor not available</div>';
+                return;
+            }
+
+            if (data.error) {
+                document.getElementById(containerId).innerHTML = `<div class="value error">${data.error}</div>`;
+                return;
+            }
+
+            let html = '';
+
+            if (data.quaternion) {
+                html += '<div class="quaternion-display">';
+                html += `<div class="quat-item"><div class="axis">X</div><div class="val">${formatValue(data.quaternion[0], 4)}</div></div>`;
+                html += `<div class="quat-item"><div class="axis">Y</div><div class="val">${formatValue(data.quaternion[1], 4)}</div></div>`;
+                html += `<div class="quat-item"><div class="axis">Z</div><div class="val">${formatValue(data.quaternion[2], 4)}</div></div>`;
+                html += `<div class="quat-item"><div class="axis">W</div><div class="val">${formatValue(data.quaternion[3], 4)}</div></div>`;
+                html += '</div>';
+            }
+
+            html += createRow('timestamp', formatValue(data.timestamp, 2));
+            html += createRow('activated', formatValue(data.activated));
+            html += createRow('hasReading', formatValue(data.hasReading));
+
+            if (data.rotationMatrix) {
+                html += createRow('rotationMatrix', `Float32Array[16]`);
+            }
+
+            document.getElementById(containerId).innerHTML = html;
+        }
+
+        // === Create Generic Sensor ===
+        function createGenericSensor(SensorClass, name, dataKey, options = {}) {
+            if (typeof SensorClass === 'undefined') {
+                collectedData.genericSensors[dataKey] = { error: 'API not supported' };
+                return null;
+            }
+
+            try {
+                const sensor = new SensorClass({ frequency: 60, ...options });
+
+                // Extract instance metadata immediately
+                collectedData.instanceMetadata[dataKey] = extractInstanceMetadata(sensor, name);
+
+                sensor.addEventListener('reading', () => {
+                    const isOrientation = name.includes('Orientation');
+
+                    if (isOrientation) {
+                        let rotationMatrix = null;
+                        try {
+                            rotationMatrix = new Float32Array(16);
+                            sensor.populateMatrix(rotationMatrix);
+                        } catch (e) {}
+
+                        collectedData.genericSensors[dataKey] = {
+                            quaternion: sensor.quaternion ? [...sensor.quaternion] : null,
+                            rotationMatrix: rotationMatrix ? [...rotationMatrix] : null,
+                            timestamp: sensor.timestamp,
+                            activated: sensor.activated,
+                            hasReading: sensor.hasReading
+                        };
+                    } else {
+                        collectedData.genericSensors[dataKey] = {
+                            x: sensor.x,
+                            y: sensor.y,
+                            z: sensor.z,
+                            timestamp: sensor.timestamp,
+                            activated: sensor.activated,
+                            hasReading: sensor.hasReading
+                        };
+                    }
+
+                    updateDisplay();
+                });
+
+                sensor.addEventListener('activate', () => {
+                    // Update metadata after activation
+                    collectedData.instanceMetadata[dataKey] = extractInstanceMetadata(sensor, name);
+                });
+
+                sensor.addEventListener('error', (event) => {
+                    collectedData.genericSensors[dataKey] = {
+                        error: event.error.name + ': ' + event.error.message
+                    };
+                    updateDisplay();
+                });
+
+                sensor.start();
+                return sensor;
+
+            } catch (e) {
+                collectedData.genericSensors[dataKey] = {
+                    error: e.name + ': ' + e.message
+                };
+                return null;
+            }
+        }
+
+        // === Legacy Events ===
+        function handleDeviceOrientation(event) {
+            collectedData.legacyEvents.deviceOrientation = {
+                alpha: event.alpha,
+                beta: event.beta,
+                gamma: event.gamma,
+                absolute: event.absolute,
+                webkitCompassHeading: event.webkitCompassHeading || null,
+                webkitCompassAccuracy: event.webkitCompassAccuracy || null,
+                timeStamp: event.timeStamp,
+                type: event.type,
+                isTrusted: event.isTrusted,
+
+                // Event object analysis
+                constructorName: event.constructor.name,
+                objectToString: Object.prototype.toString.call(event),
+                instanceofDeviceOrientationEvent: event instanceof DeviceOrientationEvent,
+                instanceofEvent: event instanceof Event
+            };
+            updateDisplay();
+        }
+
+        function handleDeviceMotion(event) {
+            collectedData.legacyEvents.deviceMotion = {
+                acceleration: event.acceleration ? {
+                    x: event.acceleration.x,
+                    y: event.acceleration.y,
+                    z: event.acceleration.z,
+                    constructorName: event.acceleration.constructor ? event.acceleration.constructor.name : null,
+                    objectToString: Object.prototype.toString.call(event.acceleration)
+                } : null,
+                accelerationIncludingGravity: event.accelerationIncludingGravity ? {
+                    x: event.accelerationIncludingGravity.x,
+                    y: event.accelerationIncludingGravity.y,
+                    z: event.accelerationIncludingGravity.z,
+                    constructorName: event.accelerationIncludingGravity.constructor ? event.accelerationIncludingGravity.constructor.name : null,
+                    objectToString: Object.prototype.toString.call(event.accelerationIncludingGravity)
+                } : null,
+                rotationRate: event.rotationRate ? {
+                    alpha: event.rotationRate.alpha,
+                    beta: event.rotationRate.beta,
+                    gamma: event.rotationRate.gamma,
+                    constructorName: event.rotationRate.constructor ? event.rotationRate.constructor.name : null,
+                    objectToString: Object.prototype.toString.call(event.rotationRate)
+                } : null,
+                interval: event.interval,
+                timeStamp: event.timeStamp,
+                type: event.type,
+                isTrusted: event.isTrusted,
+
+                // Event object analysis
+                constructorName: event.constructor.name,
+                objectToString: Object.prototype.toString.call(event),
+                instanceofDeviceMotionEvent: event instanceof DeviceMotionEvent,
+                instanceofEvent: event instanceof Event
+            };
+            updateDisplay();
+        }
+
+        // === Render Legacy Event Data ===
+        function renderDeviceOrientationData() {
+            const data = collectedData.legacyEvents.deviceOrientation;
+            const el = document.getElementById('deviceOrientData');
+
+            if (!data) {
+                el.innerHTML = '<div class="value warning">Waiting for event...</div>';
+                return;
+            }
+
+            let html = '';
+            html += createRow('alpha (z-axis)', formatValue(data.alpha));
+            html += createRow('beta (x-axis)', formatValue(data.beta));
+            html += createRow('gamma (y-axis)', formatValue(data.gamma));
+            html += createRow('absolute', formatValue(data.absolute));
+            if (data.webkitCompassHeading !== null) {
+                html += createRow('webkitCompassHeading', formatValue(data.webkitCompassHeading));
+            }
+            html += createRow('timeStamp', formatValue(data.timeStamp, 2));
+            html += createRow('isTrusted', formatValue(data.isTrusted));
+            html += createRow('constructor.name', data.constructorName);
+            html += createRow('instanceof DeviceOrientationEvent', formatValue(data.instanceofDeviceOrientationEvent));
+
+            el.innerHTML = html;
+        }
+
+        function renderDeviceMotionData() {
+            const data = collectedData.legacyEvents.deviceMotion;
+            const el = document.getElementById('deviceMotionData');
+
+            if (!data) {
+                el.innerHTML = '<div class="value warning">Waiting for event...</div>';
+                return;
+            }
+
+            let html = '';
+
+            html += '<div style="font-size:11px;color:#8b949e;margin:6px 0 4px;">acceleration (m/s²)</div>';
+            if (data.acceleration) {
+                html += createRow('  x', formatValue(data.acceleration.x));
+                html += createRow('  y', formatValue(data.acceleration.y));
+                html += createRow('  z', formatValue(data.acceleration.z));
+                html += createRow('  constructor.name', data.acceleration.constructorName);
+                html += createRow('  Object.toString', data.acceleration.objectToString);
+            } else {
+                html += createRow('  value', 'null', 'null');
+            }
+
+            html += '<div style="font-size:11px;color:#8b949e;margin:6px 0 4px;">accelerationIncludingGravity (m/s²)</div>';
+            if (data.accelerationIncludingGravity) {
+                html += createRow('  x', formatValue(data.accelerationIncludingGravity.x));
+                html += createRow('  y', formatValue(data.accelerationIncludingGravity.y));
+                html += createRow('  z', formatValue(data.accelerationIncludingGravity.z));
+                html += createRow('  constructor.name', data.accelerationIncludingGravity.constructorName);
+            } else {
+                html += createRow('  value', 'null', 'null');
+            }
+
+            html += '<div style="font-size:11px;color:#8b949e;margin:6px 0 4px;">rotationRate (°/s)</div>';
+            if (data.rotationRate) {
+                html += createRow('  alpha', formatValue(data.rotationRate.alpha));
+                html += createRow('  beta', formatValue(data.rotationRate.beta));
+                html += createRow('  gamma', formatValue(data.rotationRate.gamma));
+                html += createRow('  constructor.name', data.rotationRate.constructorName);
+            } else {
+                html += createRow('  value', 'null', 'null');
+            }
+
+            html += createRow('interval (ms)', formatValue(data.interval));
+            html += createRow('constructor.name', data.constructorName);
+            html += createRow('instanceof DeviceMotionEvent', formatValue(data.instanceofDeviceMotionEvent));
+
+            el.innerHTML = html;
+        }
+
+        // === Update Display ===
+        function updateDisplay() {
+            collectedData.timestamp = new Date().toISOString();
+
+            // Generic Sensors
+            renderXYZData(collectedData.genericSensors.accelerometer, 'accelerometerData');
+            renderXYZData(collectedData.genericSensors.linearAcceleration, 'linearAccelData');
+            renderXYZData(collectedData.genericSensors.gravity, 'gravityData');
+            renderXYZData(collectedData.genericSensors.gyroscope, 'gyroscopeData');
+            renderXYZData(collectedData.genericSensors.magnetometer, 'magnetometerData');
+            renderOrientationData(collectedData.genericSensors.absoluteOrientation, 'absOrientData');
+            renderOrientationData(collectedData.genericSensors.relativeOrientation, 'relOrientData');
+
+            // Legacy Events
+            renderDeviceOrientationData();
+            renderDeviceMotionData();
+
+            // Instance Metadata
+            renderInstanceMetadata();
+
+            // JSON Output
+            document.getElementById('jsonOutput').textContent = JSON.stringify(collectedData, null, 2);
+
+            // Live indicators
+            document.getElementById('gLive').classList.toggle('active', isRunning);
+            document.getElementById('lLive').classList.toggle('active', isRunning);
+        }
+
+        // === Start Collection ===
+        async function startCollection() {
+            if (isRunning) return;
+            isRunning = true;
+
+            showStatus('Запрашиваю разрешения...', 'info');
+
+            // Request permissions for iOS
+            if (typeof DeviceOrientationEvent !== 'undefined' &&
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    await DeviceOrientationEvent.requestPermission();
+                } catch (e) {}
+            }
+
+            if (typeof DeviceMotionEvent !== 'undefined' &&
+                typeof DeviceMotionEvent.requestPermission === 'function') {
+                try {
+                    await DeviceMotionEvent.requestPermission();
+                } catch (e) {}
+            }
+
+            // Start Generic Sensors
+            sensors.accelerometer = createGenericSensor(
+                window.Accelerometer, 'Accelerometer', 'accelerometer'
+            );
+            sensors.linearAcceleration = createGenericSensor(
+                window.LinearAccelerationSensor, 'LinearAccelerationSensor', 'linearAcceleration'
+            );
+            sensors.gravity = createGenericSensor(
+                window.GravitySensor, 'GravitySensor', 'gravity'
+            );
+            sensors.gyroscope = createGenericSensor(
+                window.Gyroscope, 'Gyroscope', 'gyroscope'
+            );
+            sensors.magnetometer = createGenericSensor(
+                window.Magnetometer, 'Magnetometer', 'magnetometer'
+            );
+            sensors.absoluteOrientation = createGenericSensor(
+                window.AbsoluteOrientationSensor, 'AbsoluteOrientationSensor', 'absoluteOrientation',
+                { referenceFrame: 'device' }
+            );
+            sensors.relativeOrientation = createGenericSensor(
+                window.RelativeOrientationSensor, 'RelativeOrientationSensor', 'relativeOrientation',
+                { referenceFrame: 'device' }
+            );
+
+            // Start Legacy Events
+            window.addEventListener('deviceorientation', handleDeviceOrientation);
+            window.addEventListener('deviceorientationabsolute', handleDeviceOrientation);
+            window.addEventListener('devicemotion', handleDeviceMotion);
+
+            showStatus('Сбор данных запущен! Двигайте устройство.', 'success');
+            updateDisplay();
+        }
+
+        // === Stop Collection ===
+        function stopCollection() {
+            isRunning = false;
+
+            for (const sensor of Object.values(sensors)) {
+                if (sensor && sensor.stop) {
+                    try { sensor.stop(); } catch (e) {}
+                }
+            }
+
+            window.removeEventListener('deviceorientation', handleDeviceOrientation);
+            window.removeEventListener('deviceorientationabsolute', handleDeviceOrientation);
+            window.removeEventListener('devicemotion', handleDeviceMotion);
+
+            updateDisplay();
+            showStatus('Сбор данных остановлен', 'info');
+        }
+
+        // === Copy to Clipboard ===
+        async function copyToClipboard() {
+            const json = JSON.stringify(collectedData, null, 2);
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(json);
+                    showStatus('✅ JSON скопирован!', 'success');
+                    return;
+                }
+            } catch (e) {}
+
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = json;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showStatus('✅ JSON скопирован!', 'success');
+            } catch (e) {
+                showStatus('Ошибка копирования', 'error');
+            }
+        }
+
+        // === Initialize ===
+        function init() {
+            checkAPISupport();
+            checkPermissions();
+            analyzeAllPrototypes();
+            analyzePropertyDescriptors();
+            analyzeConstructors();
+
+            document.getElementById('btnStart').addEventListener('click', startCollection);
+            document.getElementById('btnStop').addEventListener('click', stopCollection);
+            document.getElementById('btnCopy').addEventListener('click', copyToClipboard);
+            document.getElementById('toggleJson').addEventListener('click', () => {
+                document.getElementById('jsonOutput').classList.toggle('hidden');
+            });
+
+            updateDisplay();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+</script>
+</body>
+</html>
