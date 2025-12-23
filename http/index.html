@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HTTP Headers Diagnostic Tools</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --accent: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --purple: #a855f7;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 24px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+        
+        .tools {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .tool-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+            display: block;
+        }
+        
+        .tool-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        
+        .tool-card:active {
+            transform: translateY(0);
+        }
+        
+        .tool-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .tool-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .tool-icon.php {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+        
+        .tool-icon.js {
+            background: linear-gradient(135deg, #eab308, #f59e0b);
+        }
+        
+        .tool-icon.api {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        
+        .tool-icon.docs {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        
+        .tool-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .tool-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .badge-php {
+            background: rgba(124, 58, 237, 0.2);
+            color: #a78bfa;
+        }
+        
+        .badge-html {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+        
+        .badge-api {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+        
+        .badge-md {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+        
+        .tool-description {
+            color: var(--text-dim);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .tool-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .feature {
+            font-size: 11px;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            color: var(--text-dim);
+        }
+        
+        .section-title {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 32px 0 16px 0;
+            padding-left: 4px;
+        }
+        
+        .note {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+        
+        .note strong {
+            color: var(--accent);
+        }
+        
+        .note code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .arrow {
+            margin-left: auto;
+            color: var(--text-dim);
+            font-size: 20px;
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .tool-card {
+                padding: 16px;
+            }
+            
+            .tool-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .tool-title {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📡 HTTP Headers Diagnostic</h1>
+            <p>Инструменты для анализа HTTP заголовков мобильного Chrome</p>
+        </div>
+        
+        <div class="section-title">Диагностические инструменты</div>
+        
+        <div class="tools">
+            <a href="http-headers-diagnostic.php" class="tool-card">
+                <div class="tool-header">
+                    <div class="tool-icon php">🔬</div>
+                    <div>
+                        <div class="tool-title">Full Diagnostic</div>
+                        <span class="tool-badge badge-php">PHP</span>
+                    </div>
+                    <span class="arrow">→</span>
+                </div>
+                <div class="tool-description">
+                    Полный анализ всех HTTP заголовков. Запрашивает high-entropy Client Hints через Accept-CH. Показывает заголовки по категориям.
+                </div>
+                <div class="tool-features">
+                    <span class="feature">Client Hints</span>
+                    <span class="feature">Sec-Fetch</span>
+                    <span class="feature">JSON Export</span>
+                    <span class="feature">Categories</span>
+                </div>
+            </a>
+            
+            <a href="http-headers-js.html" class="tool-card">
+                <div class="tool-header">
+                    <div class="tool-icon js">⚡</div>
+                    <div>
+                        <div class="tool-title">JS Collector</div>
+                        <span class="tool-badge badge-html">HTML/JS</span>
+                    </div>
+                    <span class="arrow">→</span>
+                </div>
+                <div class="tool-description">
+                    JavaScript версия. Собирает данные через navigator.userAgentData API и httpbin.org. Работает без PHP сервера.
+                </div>
+                <div class="tool-features">
+                    <span class="feature">userAgentData</span>
+                    <span class="feature">High Entropy</span>
+                    <span class="feature">No Server</span>
+                    <span class="feature">Battery API</span>
+                </div>
+            </a>
+            
+            <a href="echo-headers.php" class="tool-card">
+                <div class="tool-header">
+                    <div class="tool-icon api">🔌</div>
+                    <div>
+                        <div class="tool-title">Echo API</div>
+                        <span class="tool-badge badge-api">JSON API</span>
+                    </div>
+                    <span class="arrow">→</span>
+                </div>
+                <div class="tool-description">
+                    REST API endpoint. Возвращает все полученные заголовки в JSON формате. Поддерживает CORS и JSONP.
+                </div>
+                <div class="tool-features">
+                    <span class="feature">REST API</span>
+                    <span class="feature">CORS</span>
+                    <span class="feature">JSONP</span>
+                    <span class="feature">Automation</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="section-title">Документация</div>
+        
+        <div class="tools">
+            <a href="HTTP-HEADERS-README.md" class="tool-card">
+                <div class="tool-header">
+                    <div class="tool-icon docs">📚</div>
+                    <div>
+                        <div class="tool-title">Documentation</div>
+                        <span class="tool-badge badge-md">Markdown</span>
+                    </div>
+                    <span class="arrow">→</span>
+                </div>
+                <div class="tool-description">
+                    Полная документация по всем HTTP заголовкам мобильного Chrome. Примеры для Android, отличия от desktop.
+                </div>
+                <div class="tool-features">
+                    <span class="feature">All Headers</span>
+                    <span class="feature">Android Specifics</span>
+                    <span class="feature">Examples</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="note">
+            <strong>💡 Как использовать:</strong><br><br>
+            1. Загрузите все файлы на <strong>HTTPS</strong> сервер с PHP<br>
+            2. Откройте <code>index.html</code> в мобильном Chrome<br>
+            3. Для получения high-entropy hints — <strong>обновите страницу</strong> после первого захода<br>
+            4. Скопируйте JSON и сравните с данными эмулятора
+        </div>
+    </div>
+</body>
+</html>
