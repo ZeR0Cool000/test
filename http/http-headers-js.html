@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HTTP Headers Collector (JS)</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --accent: #3b82f6;
+            --accent-dim: #1d4ed8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --purple: #a855f7;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 16px 0;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .header .subtitle {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn-primary:active {
+            background: var(--accent-dim);
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:active {
+            background: var(--border);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--success);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .section {
+            background: var(--card);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        
+        .section-header {
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        
+        .badge-js {
+            background: rgba(168, 85, 247, 0.2);
+            color: var(--purple);
+        }
+        
+        .badge-http {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent);
+        }
+        
+        .section-content {
+            padding: 12px 16px;
+        }
+        
+        .item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .item:last-child {
+            border-bottom: none;
+        }
+        
+        .item-name {
+            font-weight: 500;
+            color: var(--accent);
+            font-size: 13px;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+        
+        .item-value {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 12px;
+            color: var(--text);
+            word-break: break-all;
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+        }
+        
+        .item-value.error {
+            color: var(--error);
+        }
+        
+        .item-value.success {
+            color: var(--success);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-dim);
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: var(--card);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .note {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+        }
+        
+        .note strong {
+            color: var(--accent);
+        }
+        
+        .brands-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .brand-item {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        
+        .brand-name {
+            color: var(--accent);
+            font-weight: 500;
+        }
+        
+        .brand-version {
+            color: var(--text-dim);
+            margin-left: 4px;
+        }
+        
+        #httpHeadersContent, #jsDataContent {
+            min-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📡 HTTP Headers Collector</h1>
+        <div class="subtitle">JavaScript + HTTP Echo Service</div>
+    </div>
+    
+    <div class="btn-group">
+        <button class="btn btn-primary" onclick="copyAllJSON()">
+            📋 Copy All JSON
+        </button>
+        <button class="btn btn-secondary" onclick="collectData()">
+            🔄 Refresh
+        </button>
+    </div>
+    
+    <div class="note">
+        <strong>How it works:</strong> This tool collects data from two sources:
+        <br>1. <strong>JavaScript APIs</strong> - navigator.userAgentData and other browser APIs
+        <br>2. <strong>HTTP Headers</strong> - Sent to httpbin.org echo service
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('js')">JS APIs</button>
+        <button class="tab" onclick="showTab('http')">HTTP Headers</button>
+        <button class="tab" onclick="showTab('all')">All Data</button>
+    </div>
+    
+    <div id="jsTab" class="tab-content active">
+        <div id="jsDataContent">
+            <div class="loading"><span class="spinner"></span>Collecting JS data...</div>
+        </div>
+    </div>
+    
+    <div id="httpTab" class="tab-content">
+        <div id="httpHeadersContent">
+            <div class="loading"><span class="spinner"></span>Fetching HTTP headers...</div>
+        </div>
+    </div>
+    
+    <div id="allTab" class="tab-content">
+        <div id="allDataContent">
+            <div class="loading"><span class="spinner"></span>Preparing data...</div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast">Copied!</div>
+    
+    <script>
+        let collectedData = {
+            timestamp: new Date().toISOString(),
+            jsData: {},
+            httpHeaders: {},
+            errors: []
+        };
+        
+        // Tab switching
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`.tab:nth-child(${tab === 'js' ? 1 : tab === 'http' ? 2 : 3})`).classList.add('active');
+            document.getElementById(`${tab}Tab`).classList.add('active');
+        }
+        
+        // Collect all data
+        async function collectData() {
+            collectedData = {
+                timestamp: new Date().toISOString(),
+                jsData: {},
+                httpHeaders: {},
+                errors: []
+            };
+            
+            // Reset UI
+            document.getElementById('jsDataContent').innerHTML = '<div class="loading"><span class="spinner"></span>Collecting JS data...</div>';
+            document.getElementById('httpHeadersContent').innerHTML = '<div class="loading"><span class="spinner"></span>Fetching HTTP headers...</div>';
+            document.getElementById('allDataContent').innerHTML = '<div class="loading"><span class="spinner"></span>Preparing data...</div>';
+            
+            // Collect JS data
+            await collectJSData();
+            
+            // Collect HTTP headers
+            await collectHTTPHeaders();
+            
+            // Render all data
+            renderAllData();
+        }
+        
+        // Collect JavaScript API data
+        async function collectJSData() {
+            const jsData = {};
+            
+            // Basic navigator properties
+            jsData.navigator = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                languages: [...navigator.languages],
+                cookieEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                maxTouchPoints: navigator.maxTouchPoints,
+                vendor: navigator.vendor,
+                vendorSub: navigator.vendorSub,
+                productSub: navigator.productSub,
+                appVersion: navigator.appVersion,
+                appName: navigator.appName,
+                appCodeName: navigator.appCodeName,
+                onLine: navigator.onLine,
+                pdfViewerEnabled: navigator.pdfViewerEnabled,
+                webdriver: navigator.webdriver
+            };
+            
+            // Device memory
+            if ('deviceMemory' in navigator) {
+                jsData.navigator.deviceMemory = navigator.deviceMemory;
+            }
+            
+            // Connection info
+            if (navigator.connection) {
+                jsData.connection = {
+                    effectiveType: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink,
+                    rtt: navigator.connection.rtt,
+                    saveData: navigator.connection.saveData,
+                    type: navigator.connection.type
+                };
+            }
+            
+            // User Agent Data (Client Hints JS API)
+            if (navigator.userAgentData) {
+                jsData.userAgentData = {
+                    brands: navigator.userAgentData.brands,
+                    mobile: navigator.userAgentData.mobile,
+                    platform: navigator.userAgentData.platform
+                };
+                
+                // Get high entropy values
+                try {
+                    const highEntropy = await navigator.userAgentData.getHighEntropyValues([
+                        'architecture',
+                        'bitness',
+                        'brands',
+                        'formFactors',
+                        'fullVersionList',
+                        'mobile',
+                        'model',
+                        'platform',
+                        'platformVersion',
+                        'uaFullVersion',
+                        'wow64'
+                    ]);
+                    jsData.userAgentDataHighEntropy = highEntropy;
+                } catch (e) {
+                    collectedData.errors.push({
+                        source: 'getHighEntropyValues',
+                        error: e.message
+                    });
+                }
+            }
+            
+            // Screen info
+            jsData.screen = {
+                width: screen.width,
+                height: screen.height,
+                availWidth: screen.availWidth,
+                availHeight: screen.availHeight,
+                colorDepth: screen.colorDepth,
+                pixelDepth: screen.pixelDepth,
+                orientation: screen.orientation ? {
+                    type: screen.orientation.type,
+                    angle: screen.orientation.angle
+                } : null
+            };
+            
+            // Window info
+            jsData.window = {
+                innerWidth: window.innerWidth,
+                innerHeight: window.innerHeight,
+                outerWidth: window.outerWidth,
+                outerHeight: window.outerHeight,
+                devicePixelRatio: window.devicePixelRatio
+            };
+            
+            // Touch support
+            jsData.touch = {
+                ontouchstart: 'ontouchstart' in window,
+                maxTouchPoints: navigator.maxTouchPoints,
+                TouchEvent: 'TouchEvent' in window
+            };
+            
+            // Storage estimates
+            if (navigator.storage && navigator.storage.estimate) {
+                try {
+                    const estimate = await navigator.storage.estimate();
+                    jsData.storage = {
+                        quota: estimate.quota,
+                        usage: estimate.usage
+                    };
+                } catch (e) {
+                    collectedData.errors.push({
+                        source: 'storage.estimate',
+                        error: e.message
+                    });
+                }
+            }
+            
+            // Battery (if available)
+            if (navigator.getBattery) {
+                try {
+                    const battery = await navigator.getBattery();
+                    jsData.battery = {
+                        charging: battery.charging,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime,
+                        level: battery.level
+                    };
+                } catch (e) {
+                    collectedData.errors.push({
+                        source: 'getBattery',
+                        error: e.message
+                    });
+                }
+            }
+            
+            // Permissions
+            jsData.permissions = {};
+            const permissionsToCheck = ['geolocation', 'notifications', 'camera', 'microphone'];
+            for (const perm of permissionsToCheck) {
+                try {
+                    const result = await navigator.permissions.query({ name: perm });
+                    jsData.permissions[perm] = result.state;
+                } catch (e) {
+                    jsData.permissions[perm] = 'error';
+                }
+            }
+            
+            collectedData.jsData = jsData;
+            renderJSData(jsData);
+        }
+        
+        // Collect HTTP headers via echo service
+        async function collectHTTPHeaders() {
+            const services = [
+                'https://httpbin.org/headers',
+                'https://api.ipify.org?format=json'
+            ];
+            
+            let headers = {};
+            
+            // Try httpbin
+            try {
+                const response = await fetch('https://httpbin.org/headers', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                headers = data.headers || {};
+            } catch (e) {
+                collectedData.errors.push({
+                    source: 'httpbin.org',
+                    error: e.message
+                });
+                
+                // Fallback - create headers from JS
+                headers = {
+                    'User-Agent': navigator.userAgent,
+                    'Accept-Language': navigator.languages.join(', '),
+                    'Note': 'Fallback - httpbin.org failed'
+                };
+            }
+            
+            // Get IP
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                headers['Client-IP-External'] = ipData.ip;
+            } catch (e) {
+                // Ignore IP fetch errors
+            }
+            
+            collectedData.httpHeaders = headers;
+            renderHTTPHeaders(headers);
+        }
+        
+        // Render JS data
+        function renderJSData(data) {
+            let html = '';
+            
+            // User Agent Data section
+            if (data.userAgentData || data.userAgentDataHighEntropy) {
+                html += '<div class="section">';
+                html += '<div class="section-header"><span class="section-title">User Agent Data <span class="section-badge badge-js">JS API</span></span></div>';
+                html += '<div class="section-content">';
+                
+                if (data.userAgentData && data.userAgentData.brands) {
+                    html += '<div class="item"><div class="item-name">brands</div><div class="brands-list">';
+                    for (const brand of data.userAgentData.brands) {
+                        html += `<span class="brand-item"><span class="brand-name">${escapeHtml(brand.brand)}</span><span class="brand-version">v${escapeHtml(brand.version)}</span></span>`;
+                    }
+                    html += '</div></div>';
+                    
+                    html += `<div class="item"><div class="item-name">mobile</div><div class="item-value">${data.userAgentData.mobile}</div></div>`;
+                    html += `<div class="item"><div class="item-name">platform</div><div class="item-value">${escapeHtml(data.userAgentData.platform)}</div></div>`;
+                }
+                
+                if (data.userAgentDataHighEntropy) {
+                    const he = data.userAgentDataHighEntropy;
+                    
+                    if (he.fullVersionList) {
+                        html += '<div class="item"><div class="item-name">fullVersionList</div><div class="brands-list">';
+                        for (const brand of he.fullVersionList) {
+                            html += `<span class="brand-item"><span class="brand-name">${escapeHtml(brand.brand)}</span><span class="brand-version">v${escapeHtml(brand.version)}</span></span>`;
+                        }
+                        html += '</div></div>';
+                    }
+                    
+                    const heFields = ['model', 'platformVersion', 'architecture', 'bitness', 'wow64', 'formFactors'];
+                    for (const field of heFields) {
+                        if (he[field] !== undefined) {
+                            let value = he[field];
+                            if (Array.isArray(value)) value = value.join(', ');
+                            html += `<div class="item"><div class="item-name">${field}</div><div class="item-value">${escapeHtml(String(value))}</div></div>`;
+                        }
+                    }
+                }
+                
+                html += '</div></div>';
+            }
+            
+            // Navigator section
+            if (data.navigator) {
+                html += '<div class="section">';
+                html += '<div class="section-header"><span class="section-title">Navigator <span class="section-badge badge-js">JS API</span></span></div>';
+                html += '<div class="section-content">';
+                
+                const navFields = ['userAgent', 'platform', 'language', 'languages', 'hardwareConcurrency', 'maxTouchPoints', 'deviceMemory', 'vendor', 'webdriver'];
+                for (const field of navFields) {
+                    if (data.navigator[field] !== undefined) {
+                        let value = data.navigator[field];
+                        if (Array.isArray(value)) value = value.join(', ');
+                        html += `<div class="item"><div class="item-name">${field}</div><div class="item-value">${escapeHtml(String(value))}</div></div>`;
+                    }
+                }
+                
+                html += '</div></div>';
+            }
+            
+            // Connection section
+            if (data.connection) {
+                html += '<div class="section">';
+                html += '<div class="section-header"><span class="section-title">Network Connection <span class="section-badge badge-js">JS API</span></span></div>';
+                html += '<div class="section-content">';
+                
+                for (const [key, value] of Object.entries(data.connection)) {
+                    if (value !== undefined) {
+                        html += `<div class="item"><div class="item-name">${key}</div><div class="item-value">${escapeHtml(String(value))}</div></div>`;
+                    }
+                }
+                
+                html += '</div></div>';
+            }
+            
+            // Screen section
+            if (data.screen) {
+                html += '<div class="section">';
+                html += '<div class="section-header"><span class="section-title">Screen & Window <span class="section-badge badge-js">JS API</span></span></div>';
+                html += '<div class="section-content">';
+                
+                html += `<div class="item"><div class="item-name">screen</div><div class="item-value">${data.screen.width}x${data.screen.height} (avail: ${data.screen.availWidth}x${data.screen.availHeight})</div></div>`;
+                html += `<div class="item"><div class="item-name">window.inner</div><div class="item-value">${data.window.innerWidth}x${data.window.innerHeight}</div></div>`;
+                html += `<div class="item"><div class="item-name">devicePixelRatio</div><div class="item-value">${data.window.devicePixelRatio}</div></div>`;
+                html += `<div class="item"><div class="item-name">colorDepth</div><div class="item-value">${data.screen.colorDepth}</div></div>`;
+                
+                if (data.screen.orientation) {
+                    html += `<div class="item"><div class="item-name">orientation</div><div class="item-value">${data.screen.orientation.type} (${data.screen.orientation.angle}°)</div></div>`;
+                }
+                
+                html += '</div></div>';
+            }
+            
+            // Touch section
+            if (data.touch) {
+                html += '<div class="section">';
+                html += '<div class="section-header"><span class="section-title">Touch Support <span class="section-badge badge-js">JS API</span></span></div>';
+                html += '<div class="section-content">';
+                
+                html += `<div class="item"><div class="item-name">ontouchstart</div><div class="item-value ${data.touch.ontouchstart ? 'success' : ''}">${data.touch.ontouchstart}</div></div>`;
+                html += `<div class="item"><div class="item-name">TouchEvent</div><div class="item-value ${data.touch.TouchEvent ? 'success' : ''}">${data.touch.TouchEvent}</div></div>`;
+                html += `<div class="item"><div class="item-name">maxTouchPoints</div><div class="item-value">${data.touch.maxTouchPoints}</div></div>`;
+                
+                html += '</div></div>';
+            }
+            
+            // Battery section
+            if (data.battery) {
+                html += '<div class="section">';
+                html += '<div class="section-header"><span class="section-title">Battery <span class="section-badge badge-js">JS API</span></span></div>';
+                html += '<div class="section-content">';
+                
+                html += `<div class="item"><div class="item-name">level</div><div class="item-value">${Math.round(data.battery.level * 100)}%</div></div>`;
+                html += `<div class="item"><div class="item-name">charging</div><div class="item-value">${data.battery.charging}</div></div>`;
+                
+                html += '</div></div>';
+            }
+            
+            document.getElementById('jsDataContent').innerHTML = html || '<div class="loading">No JS data available</div>';
+        }
+        
+        // Render HTTP headers
+        function renderHTTPHeaders(headers) {
+            let html = '<div class="section">';
+            html += '<div class="section-header"><span class="section-title">HTTP Request Headers <span class="section-badge badge-http">HTTP</span></span></div>';
+            html += '<div class="section-content">';
+            
+            // Sort headers
+            const sortedHeaders = Object.entries(headers).sort((a, b) => a[0].localeCompare(b[0]));
+            
+            for (const [name, value] of sortedHeaders) {
+                html += `<div class="item"><div class="item-name">${escapeHtml(name)}</div><div class="item-value">${escapeHtml(value)}</div></div>`;
+            }
+            
+            html += '</div></div>';
+            
+            document.getElementById('httpHeadersContent').innerHTML = html;
+        }
+        
+        // Render all data as JSON
+        function renderAllData() {
+            let html = '<div class="section">';
+            html += '<div class="section-header"><span class="section-title">Complete JSON Data</span></div>';
+            html += '<div class="section-content">';
+            html += `<div class="item-value" style="max-height: 500px; overflow: auto;">${escapeHtml(JSON.stringify(collectedData, null, 2))}</div>`;
+            html += '</div></div>';
+            
+            document.getElementById('allDataContent').innerHTML = html;
+        }
+        
+        // Copy JSON
+        function copyAllJSON() {
+            const jsonStr = JSON.stringify(collectedData, null, 2);
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(jsonStr).then(() => {
+                    showToast('Copied to clipboard!');
+                }).catch(() => fallbackCopy(jsonStr));
+            } else {
+                fallbackCopy(jsonStr);
+            }
+        }
+        
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('Copied to clipboard!');
+            } catch (err) {
+                showToast('Copy failed');
+                console.log('Data:', text);
+            }
+            
+            document.body.removeChild(textarea);
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        
+        // Start collection on load
+        collectData();
+    </script>
+</body>
+</html>
